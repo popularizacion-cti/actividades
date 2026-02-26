@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Observatorio Nacional de Popularización de la Ciencia</title>
+
+<link rel="stylesheet" href="style.css">
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script>
+
+</head>
+<body>
+
+<header>
+  <h1>Observatorio Nacional de Popularización de la Ciencia</h1>
+</header>
+
+<div class="tabs">
+  <button onclick="mostrarTab('mapa')">Mapa</button>
+  <button onclick="mostrarTab('indicadores')">Indicadores</button>
+  <button onclick="mostrarTab('comparativos')">Comparativos</button>
+</div>
+
+<!-- TAB MAPA -->
+<section id="mapa" class="tab-content active">
+  
+  <div class="filtros">
+    <select id="filtroAnio"></select>
+    <select id="filtroRegion"></select>
+    <select id="filtroTipo"></select>
+    <select id="filtroModalidad"></select>
+
+    <select id="selectorIndicador">
+      <option value="actividades">Actividades</option>
+      <option value="impacto">Impacto total</option>
+      <option value="percapita">Impacto per cápita</option>
+      <option value="estudiantes">Impacto estudiantil</option>
+    </select>
+  </div>
+
+  <div id="map"></div>
+
+</section>
+
+<!-- TAB INDICADORES -->
+<section id="indicadores" class="tab-content">
+  <div class="kpi-container">
+    <div class="kpi" id="kpiActividades"></div>
+    <div class="kpi" id="kpiImpacto"></div>
+    <div class="kpi" id="kpiInvestigadores"></div>
+    <div class="kpi" id="kpiDocentes"></div>
+  </div>
+
+  <div class="graficos">
+    <div id="graficoCrecimiento"></div>
+    <div id="graficoGenero"></div>
+  </div>
+</section>
+
+<!-- TAB COMPARATIVOS -->
+<section id="comparativos" class="tab-content">
+  <div id="graficoPerCapita"></div>
+  <div id="graficoEstudiantes"></div>
+</section>
+
+<script src="script.js"></script>
+
+</body>
+</html>
