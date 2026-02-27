@@ -16,58 +16,53 @@
 <body>
 
 <header>
-  <h1>Observatorio Nacional de Popularización de la Ciencia</h1>
+<h1>Observatorio Nacional de Popularización de la Ciencia</h1>
 </header>
 
 <div class="tabs">
-  <button onclick="mostrarTab('mapa')">Mapa</button>
-  <button onclick="mostrarTab('indicadores')">Indicadores</button>
-  <button onclick="mostrarTab('comparativos')">Comparativos</button>
+<button onclick="mostrarTab('mapa')">Mapa</button>
+<button onclick="mostrarTab('indicadores')">Indicadores</button>
+<button onclick="mostrarTab('comparativos')">Comparativos</button>
 </div>
 
-<!-- TAB MAPA -->
-<section id="mapa" class="tab-content active">
-  
-  <div class="filtros">
-    <select id="filtroAnio"></select>
-    <select id="filtroRegion"></select>
-    <select id="filtroTipo"></select>
-    <select id="filtroModalidad"></select>
+<section id="mapa" class="tab active">
+<div class="filtros">
+<select id="filtroAnio"></select>
+<select id="filtroRegion"></select>
 
-    <select id="selectorIndicador">
-      <option value="actividades">Actividades</option>
-      <option value="impacto">Impacto total</option>
-      <option value="percapita">Impacto per cápita</option>
-      <option value="estudiantes">Impacto estudiantil</option>
-    </select>
-  </div>
+<select id="selectorIndicador">
+<option value="actividades">Actividades</option>
+<option value="impactado">Público impactado</option>
+<option value="alcanzado">Público alcanzado</option>
+<option value="percapita">Impacto per cápita</option>
+<option value="estudiantes">Impacto estudiantil</option>
+</select>
+</div>
 
-  <div id="map"></div>
-
+<div id="map"></div>
 </section>
 
-<!-- TAB INDICADORES -->
-<section id="indicadores" class="tab-content">
-  <div class="kpi-container">
-    <div class="kpi" id="kpiActividades"></div>
-    <div class="kpi" id="kpiImpacto"></div>
-    <div class="kpi" id="kpiInvestigadores"></div>
-    <div class="kpi" id="kpiDocentes"></div>
-  </div>
+<section id="indicadores" class="tab">
+<div class="kpis">
+<div class="kpi" id="kpiActividades"></div>
+<div class="kpi" id="kpiImpactado"></div>
+<div class="kpi" id="kpiAlcanzado"></div>
+<div class="kpi" id="kpiInvestigadores"></div>
+<div class="kpi" id="kpiDocentes"></div>
+<div class="kpi" id="kpiEstudiantes"></div>
+</div>
 
-  <div class="graficos">
-    <div id="graficoCrecimiento"></div>
-    <div id="graficoGenero"></div>
-  </div>
+<div class="graficos">
+<div id="graficoCrecimiento"></div>
+<div id="graficoGenero"></div>
+</div>
 </section>
 
-<!-- TAB COMPARATIVOS -->
-<section id="comparativos" class="tab-content">
-  <div id="graficoPerCapita"></div>
-  <div id="graficoEstudiantes"></div>
+<section id="comparativos" class="tab">
+<div id="graficoPerCapita"></div>
+<div id="graficoEstudiantes"></div>
 </section>
 
 <script src="script.js"></script>
-
 </body>
 </html>
