@@ -1,9 +1,9 @@
 // ==========================
 // PEGAR IDS GOOGLE SHEETS
 // ==========================
-const ID_ACTIVIDADES = "PEGA_ID_ACTIVIDADES";
-const ID_POBLACION = "PEGA_ID_POBLACION";
-const ID_ESTUDIANTES = "PEGA_ID_ESTUDIANTES";
+const ID_ACTIVIDADES = "1e9ogOXCAVOoZAM8T9lITUD0K0o1KpnwK-6ZarZmVjSM";
+const ID_POBLACION = "1N_xa_CU8bK0nKjnp5hgyZOqHUOUf5hckJyO9nQZ8WXM";
+const ID_ESTUDIANTES = "1tod4mESfZJz3s6e0DUwNuUF6bKTsuD-HiQHakwU_Vgs";
 
 const urlActividades = `https://docs.google.com/spreadsheets/d/${ID_ACTIVIDADES}/gviz/tq?tqx=out:json`;
 const urlPoblacion = `https://docs.google.com/spreadsheets/d/${ID_POBLACION}/gviz/tq?tqx=out:json`;
