@@ -26,7 +26,10 @@ cursor:pointer;
 .tab{display:none;padding:20px;}
 .tab.active{display:block;}
 
-#map{height:500px;width:100%;}
+#map{
+height:500px;
+width:100%;
+}
 
 .filtros{
 display:flex;
@@ -48,6 +51,7 @@ flex:1;
 min-width:200px;
 text-align:center;
 border-radius:8px;
+box-shadow:0 2px 5px rgba(0,0,0,0.1);
 }
 
 .graficos{
@@ -56,16 +60,14 @@ flex-wrap:wrap;
 gap:20px;
 }
 
-.graficos div,
-#comparativos div{
+.graficos div{
 width:48%;
 height:400px;
 background:white;
 }
 
 @media(max-width:768px){
-.graficos div,
-#comparativos div{
+.graficos div{
 width:100%;
 }
 }
