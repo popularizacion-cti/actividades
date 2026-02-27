@@ -9,21 +9,13 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script>
 </head>
 
 <body>
 
 <header>
-<h1>Observatorio Nacional de Actividades de Popularización de la Ciencia</h1>
+<h1>Observatorio Nacional de Actividades Popularización de la Ciencia - CONCYTEC</h1>
 </header>
-
-<div class="tabs">
-<button onclick="mostrarTab('mapa')">Mapa</button>
-<button onclick="mostrarTab('indicadores')">Indicadores</button>
-</div>
-
-<section id="mapa" class="tab active">
 
 <div class="filtros">
 <select id="filtroAnio"></select>
@@ -39,25 +31,6 @@
 </div>
 
 <div id="map"></div>
-</section>
-
-<section id="indicadores" class="tab">
-
-<div class="kpis">
-<div class="kpi" id="kpiActividades"></div>
-<div class="kpi" id="kpiImpactado"></div>
-<div class="kpi" id="kpiAlcanzado"></div>
-<div class="kpi" id="kpiInvestigadores"></div>
-<div class="kpi" id="kpiDocentes"></div>
-<div class="kpi" id="kpiEstudiantes"></div>
-</div>
-
-<div class="graficos">
-<div id="graficoCrecimiento"></div>
-<div id="graficoGenero"></div>
-</div>
-
-</section>
 
 <script src="script.js"></script>
 </body>
