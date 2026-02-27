@@ -3,29 +3,28 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Observatorio Nacional de Popularización de la Ciencia</title>
+<title>Observatorio POP CTI</title>
 
 <link rel="stylesheet" href="style.css">
-
 <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-
 <script src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script>
-
 </head>
+
 <body>
 
 <header>
-<h1>Observatorio Nacional de Popularización de la Ciencia</h1>
+<h1>Observatorio Nacional de Actividades de Popularización de la Ciencia</h1>
 </header>
 
 <div class="tabs">
 <button onclick="mostrarTab('mapa')">Mapa</button>
 <button onclick="mostrarTab('indicadores')">Indicadores</button>
-<button onclick="mostrarTab('comparativos')">Comparativos</button>
 </div>
 
 <section id="mapa" class="tab active">
+
 <div class="filtros">
 <select id="filtroAnio"></select>
 <select id="filtroRegion"></select>
@@ -43,6 +42,7 @@
 </section>
 
 <section id="indicadores" class="tab">
+
 <div class="kpis">
 <div class="kpi" id="kpiActividades"></div>
 <div class="kpi" id="kpiImpactado"></div>
@@ -56,11 +56,7 @@
 <div id="graficoCrecimiento"></div>
 <div id="graficoGenero"></div>
 </div>
-</section>
 
-<section id="comparativos" class="tab">
-<div id="graficoPerCapita"></div>
-<div id="graficoEstudiantes"></div>
 </section>
 
 <script src="script.js"></script>
