@@ -1,207 +1,343 @@
-// ==========================
-// PEGAR IDS GOOGLE SHEETS
-// ==========================
-const ID_ACTIVIDADES = "1e9ogOXCAVOoZAM8T9lITUD0K0o1KpnwK-6ZarZmVjSM";
-const ID_POBLACION = "1N_xa_CU8bK0nKjnp5hgyZOqHUOUf5hckJyO9nQZ8WXM";
-const ID_ESTUDIANTES = "1tod4mESfZJz3s6e0DUwNuUF6bKTsuD-HiQHakwU_Vgs";
+// ================================
+// CONFIGURACIÓN GOOGLE SHEETS
+// ================================
+const SHEET_ID = "1KXmB725GOfa-ROh7L9MHNcgAT9KqXDFrwNGOZmAJe1s";
+const URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json`;
 
-const urlActividades = `https://docs.google.com/spreadsheets/d/${ID_ACTIVIDADES}/gviz/tq?tqx=out:json`;
-const urlPoblacion = `https://docs.google.com/spreadsheets/d/${ID_POBLACION}/gviz/tq?tqx=out:json`;
-const urlEstudiantes = `https://docs.google.com/spreadsheets/d/${ID_ESTUDIANTES}/gviz/tq?tqx=out:json`;
+let eventosGlobal = [];
+let map;
+let geoLayer;
+let grafico1, grafico2, grafico3;
 
-let actividades = [];
-let poblacion = {};
-let estudiantes = {};
-let map, geoLayer;
+// ================================
+// CARGA DE DATOS
+// ================================
+async function cargarDatos() {
 
-// ================= LIMPIAR JSON GVIZ =================
-async function cargarJSON(url){
-  const res = await fetch(url);
-  const text = await res.text();
+  const response = await fetch(URL);
+  const text = await response.text();
 
+  // Extraemos el JSON real del wrapper de Google
   const json = JSON.parse(
-    text.substring(47).slice(0, -2)
+    text.substring(
+      text.indexOf("{"),
+      text.lastIndexOf("}") + 1
+    )
   );
 
-  return json.table.rows;
+  // Transformamos datos
+  eventosGlobal = json.table.rows.map(r => ({
+    nombre: r.c[0]?.v || "",
+    ciudad: r.c[1]?.v || "",
+    region: r.c[2]?.v || "",
+    ugel: r.c[3]?.v || "",
+    mes: r.c[4]?.v || "",
+    anio: String(r.c[5]?.v || ""),
+    institucion: r.c[6]?.v || "",
+    lugar: r.c[7]?.v || "",
+    alcance: r.c[8]?.v || "",
+    descripcion: r.c[9]?.v || "",
+    enlace: r.c[10]?.v || "",
+    clubes: Number(r.c[11]?.v || 0),
+    alumnos: Number(r.c[12]?.v || 0),
+    docentes: Number(r.c[13]?.v || 0),
+    participantes: Number(r.c[14]?.v || 0),
+    modalidad: r.c[15]?.v || ""
+  }));
+
+  inicializarMapa();
+  cargarFiltros();
+  actualizarVisualizacion();
 }
 
-// ================= NORMALIZAR TEXTO =================
-function normalizar(texto){
-  return (texto || "")
-    .toString()
-    .toUpperCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .trim();
-}
+// ================================
+// MAPA COMPLETAMENTE BLOQUEADO EN PERÚ
+// ================================
+function inicializarMapa() {
 
-// ================= PROCESAR ACTIVIDADES =================
-async function cargarActividades(){
+  map = L.map('map', {
 
-  const rows = await cargarJSON(urlActividades);
+    // 🔒 Desactiva todos los controles de interacción
+    zoomControl: false,
+    dragging: false,
+    scrollWheelZoom: false,
+    doubleClickZoom: false,
+    boxZoom: false,
+    keyboard: false,
+    touchZoom: false,
 
-  actividades = rows.map(r => {
+    // 🔒 Fija el nivel de zoom (no permite acercar ni alejar)
+    minZoom: 6,
+    maxZoom: 6,
 
-    const c = r.c;
+    // 🔒 BLOQUEO GEOGRÁFICO DEL MAPA
+    maxBounds: [
 
-    const region = normalizar(c[8]?.v);
-    const anio = c[6]?.v?.toString() || "";
+      // 👉 PRIMER PAR = ESQUINA SUROESTE
+      //    [LATITUD, LONGITUD]
+      //    LATITUD controla ALTO (arriba-abajo)
+      //    LONGITUD controla ANCHO (izquierda-derecha)
 
-    const invH = Number(c[11]?.v || 0);
-    const invM = Number(c[12]?.v || 0);
-    const docentes = Number(c[13]?.v || 0);
-    const estH = Number(c[14]?.v || 0);
-    const estM = Number(c[15]?.v || 0);
-    const pubPres = Number(c[16]?.v || 0);
-    const pubVirt = Number(c[17]?.v || 0);
+      [-20, -85],   // 🔒 Alto inferior (Sur)  | 🔒 Ancho izquierdo (Oeste)
 
-    const impactado = invH + invM + docentes + estH + estM + pubPres;
-    const alcanzado = impactado + pubVirt;
+      // 👉 SEGUNDO PAR = ESQUINA NORESTE
+      [5, -65]      // 🔒 Alto superior (Norte) | 🔒 Ancho derecho (Este)
 
-    return {
-      region,
-      anio,
-      impactado,
-      alcanzado,
-      investigadores: invH + invM,
-      docentes,
-      estudiantes: estH + estM
-    };
-  });
-}
+    ],
 
-// ================= PROCESAR POBLACION =================
-async function cargarPoblacion(){
+    // Hace que el mapa "rebote" si intenta salirse
+    maxBoundsViscosity: 1.0
 
-  const rows = await cargarJSON(urlPoblacion);
+  }).setView([-9.19, -75.015], 6);
 
-  rows.forEach(r => {
-    const c = r.c;
-    const region = normalizar(c[0]?.v);
-    poblacion[region] = {
-      "2022": Number(c[1]?.v || 0),
-      "2023": Number(c[2]?.v || 0),
-      "2024": Number(c[3]?.v || 0),
-      "2025": Number(c[4]?.v || 0),
-      "2026": Number(c[5]?.v || 0)
-    };
-  });
-}
-
-// ================= PROCESAR ESTUDIANTES =================
-async function cargarEstudiantes(){
-
-  const rows = await cargarJSON(urlEstudiantes);
-
-  rows.forEach(r => {
-    const c = r.c;
-    const region = normalizar(c[0]?.v);
-    estudiantes[region] = {
-      "2022": Number(c[1]?.v || 0),
-      "2023": Number(c[2]?.v || 0),
-      "2024": Number(c[3]?.v || 0),
-      "2025": Number(c[4]?.v || 0),
-      "2026": Number(c[5]?.v || 0)
-    };
-  });
-}
-
-// ================= FILTROS =================
-function aplicarFiltros(){
-  const anio = document.getElementById("filtroAnio").value;
-  const region = document.getElementById("filtroRegion").value;
-
-  return actividades.filter(a =>
-    (!anio || a.anio === anio) &&
-    (!region || a.region === region)
-  );
-}
-
-// ================= CALCULAR INDICADOR =================
-function calcularIndicador(region){
-
-  const anio = document.getElementById("filtroAnio").value;
-  const modo = document.getElementById("selectorIndicador").value;
-
-  const data = aplicarFiltros().filter(a => a.region === region);
-
-  if(modo === "actividades")
-    return data.length;
-
-  if(modo === "impactado")
-    return data.reduce((s,a)=>s+a.impactado,0);
-
-  if(modo === "alcanzado")
-    return data.reduce((s,a)=>s+a.alcanzado,0);
-
-  if(modo === "percapita"){
-    const total = data.reduce((s,a)=>s+a.impactado,0);
-    const pob = poblacion[region]?.[anio] || 1;
-    return total / pob;
-  }
-
-  if(modo === "estudiantes"){
-    const total = data.reduce((s,a)=>s+a.estudiantes,0);
-    const est = estudiantes[region]?.[anio] || 1;
-    return total / est;
-  }
-
-  return 0;
-}
-
-// ================= ESCALA DINÁMICA =================
-function escalaColor(valor){
-
-  const regiones = Object.keys(poblacion);
-  const valores = regiones.map(r => calcularIndicador(r));
-  const max = Math.max(...valores);
-
-  if(valor === 0) return "transparent";
-
-  const ratio = valor / max;
-
-  if(ratio > 0.8) return "#800026";
-  if(ratio > 0.6) return "#BD0026";
-  if(ratio > 0.4) return "#E31A1C";
-  if(ratio > 0.2) return "#FC4E2A";
-  return "#FD8D3C";
-}
-
-// ================= MAPA =================
-function inicializarMapa(){
-
-  map = L.map('map').setView([-9,-75],6);
-
+  // Capa base
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png')
     .addTo(map);
 
-  fetch('data/peru-regiones.geojson')
-  .then(r=>r.json())
-  .then(data=>{
-    geoLayer = L.geoJSON(data,{
-      style: f => ({
-        fillColor: escalaColor(
-          calcularIndicador(normalizar(f.properties.NOMBDEP))
-        ),
-        weight:1,
-        color:"#555",
-        fillOpacity:0.7
-      })
-    }).addTo(map);
+  // Carga del GeoJSON
+  fetch('peru-regiones.geojson')
+    .then(res => res.json())
+    .then(data => {
+      geoLayer = L.geoJSON(data, {
+        style: estiloRegion,
+        onEachFeature: onEachRegion
+      }).addTo(map);
+    });
+}
+
+// ================================
+// FILTROS
+// ================================
+function aplicarFiltros() {
+
+  const anio = document.getElementById("filtroAnio").value;
+  const region = document.getElementById("filtroRegion").value;
+  const inst = document.getElementById("filtroInstitucion").value;
+  const alcance = document.getElementById("filtroAlcance").value;
+
+  return eventosGlobal.filter(e =>
+    (!anio || e.anio === anio) &&
+    (!region || e.region === region) &&
+    (!inst || e.institucion === inst) &&
+    (!alcance || e.alcance === alcance)
+  );
+}
+
+// ================================
+// ESTILO DINÁMICO DEL MAPA
+// ================================
+function estiloRegion(feature) {
+
+  const regionNombre = String(feature.properties.NOMBDEP).toUpperCase();
+  const filtrados = aplicarFiltros();
+
+  const cantidad = filtrados.filter(e =>
+    e.region.toUpperCase() === regionNombre
+  ).length;
+
+  const max = Math.max(
+    ...Object.values(
+      filtrados.reduce((acc, e) => {
+        acc[e.region] = (acc[e.region] || 0) + 1;
+        return acc;
+      }, {})
+    ),
+    0
+  );
+
+  // Transparente si no hay eventos
+  if (cantidad === 0) {
+    return { fillColor: "transparent", weight: 1, color: "#999", fillOpacity: 0.3 };
+  }
+
+  const intensidad = cantidad / max;
+
+  return {
+    fillColor: `rgba(181,18,27, ${intensidad})`,
+    weight: 1,
+    color: "#444",
+    fillOpacity: 0.8
+  };
+}
+
+// ================================
+// POPUP POR REGIÓN
+// ================================
+function onEachRegion(feature, layer) {
+
+  const regionNombre = String(feature.properties.NOMBDEP).toUpperCase();
+
+  layer.on("click", () => {
+
+    const filtrados = aplicarFiltros().filter(e =>
+      e.region.toUpperCase() === regionNombre
+    );
+
+    const total = filtrados.length;
+    const asistentes = filtrados.reduce((a,b)=>a+b.participantes,0);
+    const alum = filtrados.reduce((a,b)=>a+b.alumnos,0);
+    const doce = filtrados.reduce((a,b)=>a+b.docentes,0);
+
+    layer.bindPopup(`
+      <strong>${regionNombre}</strong><br>
+      Encuentros: ${total}<br>
+      Asistentes: ${asistentes}<br>
+      - Estudiantes: ${alum}<br>
+      - Docentes: ${doce}
+    `).openPopup();
+  });
+}
+
+// ================================
+// LISTA LATERAL
+// ================================
+function actualizarLista() {
+
+  const contenedor = document.getElementById("listaEventos");
+  const filtrados = aplicarFiltros();
+
+  contenedor.innerHTML = "";
+
+  filtrados.forEach(e => {
+    contenedor.innerHTML += `
+      <div class="evento-item">
+        <strong>${e.nombre}</strong><br>
+        Región ${e.region} - ${e.mes} ${e.anio}<br>
+        Asistentes: ${e.participantes} (${e.alumnos} estudiantes y ${e.docentes} docentes)
+      </div>
+    `;
+  });
+}
+
+// ================================
+// INDICADORES
+// ================================
+function actualizarIndicadores() {
+
+  const filtrados = aplicarFiltros();
+  const regiones = new Set(filtrados.map(e=>e.region));
+  const asistentes = filtrados.reduce((a,b)=>a+b.participantes,0);
+  const alum = filtrados.reduce((a,b)=>a+b.alumnos,0);
+  const doce = filtrados.reduce((a,b)=>a+b.docentes,0);
+
+  document.getElementById("kpiCobertura").innerHTML =
+    `Cobertura: ${regiones.size} regiones`;
+
+  document.getElementById("kpiTotal").innerHTML =
+    `Encuentros: ${filtrados.length}`;
+
+  document.getElementById("kpiAsistentes").innerHTML =
+    `Asistentes: ${asistentes} (${alum} estudiantes y ${doce} docentes)`;
+}
+
+// ================================
+// GRÁFICOS
+// ================================
+function actualizarGraficos() {
+
+  const filtrados = aplicarFiltros();
+
+  // Encuentros por año
+  const porAnio = {};
+  filtrados.forEach(e=>{
+    porAnio[e.anio] = (porAnio[e.anio] || 0) + 1;
   });
 
-  window.addEventListener("resize", ()=> map.invalidateSize());
+  if (grafico1) grafico1.destroy();
+
+  grafico1 = new Chart(document.getElementById("graficoEncuentros"), {
+    type: "line",
+    data: {
+      labels: Object.keys(porAnio),
+      datasets: [{
+        label: "Encuentros por año",
+        data: Object.values(porAnio)
+      }]
+    },
+    options: {
+    responsive: false,
+    maintainAspectRatio: false
+    }
+  });
+
+  // Asistentes por año
+  const asistentesAnio = {};
+  filtrados.forEach(e=>{
+    asistentesAnio[e.anio] = (asistentesAnio[e.anio] || 0) + e.participantes;
+  });
+
+  if (grafico2) grafico2.destroy();
+
+  grafico2 = new Chart(document.getElementById("graficoAsistentes"), {
+    type: "bar",
+    data: {
+      labels: Object.keys(asistentesAnio),
+      datasets: [{
+        label: "Asistentes por año",
+        data: Object.values(asistentesAnio)
+      }]
+    },
+    options: {
+    responsive: false,
+    maintainAspectRatio: false
+    }
+  });
+
+  // Regiones con más encuentros
+  const regiones = {};
+  filtrados.forEach(e=>{
+    regiones[e.region] = (regiones[e.region] || 0) + 1;
+  });
+
+  if (grafico3) grafico3.destroy();
+
+  grafico3 = new Chart(document.getElementById("graficoRegiones"), {
+    type: "bar",
+    data: {
+      labels: Object.keys(regiones),
+      datasets: [{
+        label: "Encuentros por región",
+        data: Object.values(regiones)
+      }]
+    },
+    options: {
+    responsive: false,
+    maintainAspectRatio: false
+    }
+  });
 }
 
-// ================= INICIO =================
-async function iniciar(){
-
-  await cargarActividades();
-  await cargarPoblacion();
-  await cargarEstudiantes();
-
-  inicializarMapa();
+// ================================
+// ACTUALIZACIÓN GLOBAL
+// ================================
+function actualizarVisualizacion() {
+  if (geoLayer) geoLayer.setStyle(estiloRegion);
+  actualizarIndicadores();
+  actualizarGraficos();
+  actualizarLista();
 }
 
-iniciar();
+// ================================
+// CARGA DE FILTROS
+// ================================
+function cargarFiltros() {
+
+  llenarSelect("filtroAnio", [...new Set(eventosGlobal.map(e=>e.anio))]);
+  llenarSelect("filtroRegion", [...new Set(eventosGlobal.map(e=>e.region))]);
+  llenarSelect("filtroInstitucion", [...new Set(eventosGlobal.map(e=>e.institucion))]);
+  llenarSelect("filtroAlcance", [...new Set(eventosGlobal.map(e=>e.alcance))]);
+
+  document.querySelectorAll("select").forEach(s=>{
+    s.addEventListener("change", actualizarVisualizacion);
+  });
+}
+
+function llenarSelect(id, datos) {
+  const select = document.getElementById(id);
+  select.innerHTML = `<option value="">Todos</option>`;
+  datos.filter(Boolean).forEach(d=>{
+    select.innerHTML += `<option value="${d}">${d}</option>`;
+  });
+}
+
+cargarDatos();
