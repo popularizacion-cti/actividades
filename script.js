@@ -350,7 +350,7 @@ function cargarFiltros() {
   llenarSelect("filtroObjetivo", [...new Set(eventosGlobal.map(e=>e.objetivo))]);
   llenarSelect("filtroPrograma", [...new Set(eventosGlobal.map(e=>e.programa))]);
   llenarSelect("filtroProyecto", [...new Set(eventosGlobal.map(e=>e.proyecto))]);
-  llenarSelect("filtroActividad", [...new Set(eventosGlobal.map(e=>e.actividades))]);
+  llenarSelect("filtroActividad", [...new Set(eventosGlobal.map(e=>e.nombre))]);
   llenarSelect("filtroAnio", [...new Set(eventosGlobal.map(e=>e.anio))]);
   llenarSelect("filtroRegion", [...new Set(eventosGlobal.map(e=>e.region))]);
   llenarSelect("filtroInstitucion", [...new Set(eventosGlobal.map(e=>e.institucion))]);
