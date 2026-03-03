@@ -234,18 +234,25 @@ function actualizarIndicadores() {
 
   const filtrados = aplicarFiltros();
   const regiones = new Set(filtrados.map(e=>e.region));
-  const asistentes = filtrados.reduce((a,b)=>a+b.participantes,0);
-  const alum = filtrados.reduce((a,b)=>a+b.alumnos,0);
+  const alum = filtrados.reduce((a,b)=>a+b.estudiantesm,0) + filtrados.reduce((a,b)=>a+b.estudiantesf,0);
   const doce = filtrados.reduce((a,b)=>a+b.docentes,0);
+  const inve = filtrados.reduce((a,b)=>a+b.investigadores,0) + filtrados.reduce((a,b)=>a+b.investigadoras,0);
+  const participantes = alum + doce + inve;
+  const asistentesp = filtrados.reduce((a,b)=>a+b.ppresencial,0);
+  const asistentesv = filtrados.reduce((a,b)=>a+b.pvirtual,0);
+  const asistentes = asistentesp + asistentesv;
 
   document.getElementById("kpiCobertura").innerHTML =
     `Cobertura: ${regiones.size} regiones`;
 
   document.getElementById("kpiTotal").innerHTML =
-    `Encuentros: ${filtrados.length}`;
+    `Actividades: ${filtrados.length}`;
 
+  document.getElementById("kpiParticipantes").innerHTML =
+    `Participantes: ${participantes} (${alum} estudiantes, ${doce} docentes) y ${inve} investigadores`;
+  
   document.getElementById("kpiAsistentes").innerHTML =
-    `Asistentes: ${asistentes} (${alum} estudiantes y ${doce} docentes)`;
+    `Público asistente: ${asistentes} (${asistentesp} presenciales y ${asistentes} virtuales)`;
 }
 
 // ================================
