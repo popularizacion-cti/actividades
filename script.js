@@ -254,7 +254,7 @@ function actualizarIndicadores() {
     `Participantes: ${participantes} (${alum} estudiantes, ${doce} docentes) y ${inve} investigadores`;
   
   document.getElementById("kpiAsistentes").innerHTML =
-    `Público asistente: ${asistentes} (${asistentesp} presenciales y ${asistentes} virtuales)`;
+    `Público asistente: ${asistentes} (${asistentesp} presenciales y ${asistentesv} virtuales)`;
 }
 
 // ================================
