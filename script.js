@@ -27,22 +27,26 @@ async function cargarDatos() {
 
   // Transformamos datos
   eventosGlobal = json.table.rows.map(r => ({
-    nombre: r.c[0]?.v || "",
-    ciudad: r.c[1]?.v || "",
-    region: r.c[2]?.v || "",
-    ugel: r.c[3]?.v || "",
-    mes: r.c[4]?.v || "",
-    anio: String(r.c[5]?.v || ""),
-    institucion: r.c[6]?.v || "",
-    lugar: r.c[7]?.v || "",
-    alcance: r.c[8]?.v || "",
-    descripcion: r.c[9]?.v || "",
-    enlace: r.c[10]?.v || "",
-    clubes: Number(r.c[11]?.v || 0),
-    alumnos: Number(r.c[12]?.v || 0),
-    docentes: Number(r.c[13]?.v || 0),
-    participantes: Number(r.c[14]?.v || 0),
-    modalidad: r.c[15]?.v || ""
+    objetivo: r.c[0]?.v || "",
+    programa: r.c[1]?.v || "",
+    proyecto: r.c[2]?.v || "",
+    nombre: r.c[3]?.v || "",
+    tipo: r.c[4]?.v || "",
+    modalidad: r.c[5]?.v || "",
+    mes: r.c[6]?.v || "",
+    anio: String(r.c[7]?.v || ""),
+    localidad: r.c[8]?.v || "",
+    region: r.c[9]?.v || "",
+    institucion: r.c[10]?.v || "",
+    alcance: r.c[12]?.v || "",
+    investigadores: Number(r.c[13]?.v || 0),
+    investigadoras: Number(r.c[14]?.v || 0),
+    docentes: Number(r.c[15]?.v || 0),
+    estudiantesm: Number(r.c[16]?.v || 0),
+    estudiantesf: Number(r.c[17]?.v || 0),
+    ppresencial: Number(r.c[18]?.v || 0),
+    pvirtual: Number(r.c[19]?.v || 0),
+    actividades: Number(r.c[20]?.v || 0),
   }));
 
   inicializarMapa();
@@ -110,12 +114,18 @@ function inicializarMapa() {
 // ================================
 function aplicarFiltros() {
 
+  const objetivo = document.getElementById("filtroObjetivo").value;
+  const programa = document.getElementById("filtroPrograma").value;
+  const Proyecto = document.getElementById("filtroProyecto").value;
   const anio = document.getElementById("filtroAnio").value;
   const region = document.getElementById("filtroRegion").value;
   const inst = document.getElementById("filtroInstitucion").value;
   const alcance = document.getElementById("filtroAlcance").value;
 
   return eventosGlobal.filter(e =>
+    (!objetivo || e.objetivo === objetivo) &&
+    (!programa || e.programa === programa) &&
+    (!proyecto || e.proyecto === proyecto) &&
     (!anio || e.anio === anio) &&
     (!region || e.region === region) &&
     (!inst || e.institucion === inst) &&
@@ -174,16 +184,23 @@ function onEachRegion(feature, layer) {
     );
 
     const total = filtrados.length;
-    const asistentes = filtrados.reduce((a,b)=>a+b.participantes,0);
-    const alum = filtrados.reduce((a,b)=>a+b.alumnos,0);
+    const invest = filtrados.reduce((a,b)=>a+b.investigadores,0) + filtrados.reduce((a,b)=>a+b.investigadoras,0);
     const doce = filtrados.reduce((a,b)=>a+b.docentes,0);
-
+    const estud = filtrados.reduce((a,b)=>a+b.estudiantesm,0) + filtrados.reduce((a,b)=>a+b.estudiantesf,0);
+    const gene = filtrados.reduce((a,b)=>a+b.ppresencial,0);
+    const pimpactado = invest + doce + estud + gene;
+    const palcanzado = pimpactado + filtrados.reduce((a,b)=>a+b.pvirtual,0);
+    const activ = filtrados.reduce((a,b)=>a+b.actividades,0);
+       
+    
     layer.bindPopup(`
       <strong>${regionNombre}</strong><br>
-      Encuentros: ${total}<br>
-      Asistentes: ${asistentes}<br>
-      - Estudiantes: ${alum}<br>
-      - Docentes: ${doce}
+      Actividades: ${activ}<br>
+      Público impactado: ${pimpactado}<br>
+      - Investigadores: ${invest}<br>
+      - Estudiantes: ${estud}<br>
+      - Docentes: ${doce}<br>
+      - General: ${gene} <br>
     `).openPopup();
   });
 }
@@ -203,7 +220,7 @@ function actualizarLista() {
       <div class="evento-item">
         <strong>${e.nombre}</strong><br>
         Región ${e.region} - ${e.mes} ${e.anio}<br>
-        Asistentes: ${e.participantes} (${e.alumnos} estudiantes y ${e.docentes} docentes)
+        Público impactado: ${e.investigadores + e.investigadoras} investigadores, ${e.estudiantesm + e.estudiantesf} estudiantes, ${e.docentes} docentes y ${e.ppresencial} público general.<br>
       </div>
     `;
   });
