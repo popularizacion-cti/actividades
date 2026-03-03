@@ -117,6 +117,7 @@ function aplicarFiltros() {
   const objetivo = document.getElementById("filtroObjetivo").value;
   const programa = document.getElementById("filtroPrograma").value;
   const proyecto = document.getElementById("filtroProyecto").value;
+  const actividad = document.getElementById("filtroActividad").value;
   const anio = document.getElementById("filtroAnio").value;
   const region = document.getElementById("filtroRegion").value;
   const inst = document.getElementById("filtroInstitucion").value;
@@ -126,6 +127,7 @@ function aplicarFiltros() {
     (!objetivo || e.objetivo === objetivo) &&
     (!programa || e.programa === programa) &&
     (!proyecto || e.proyecto === proyecto) &&
+    (!actividad || e.nombre === actividad) &&
     (!anio || e.anio === anio) &&
     (!region || e.region === region) &&
     (!inst || e.institucion === inst) &&
