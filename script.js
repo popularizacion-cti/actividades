@@ -115,12 +115,12 @@ function inicializarMapa() {
 function aplicarFiltros() {
 
   const objetivo = document.getElementById("filtroObjetivo").value;
-  const programa = document.getElementById("filtroPrograma").value;
-  const proyecto = document.getElementById("filtroProyecto").value;
-  const actividad = document.getElementById("filtroActividad").value;
-  const anio = document.getElementById("filtroAnio").value;
-  const region = document.getElementById("filtroRegion").value;
-  const inst = document.getElementById("filtroInstitucion").value;
+  const programa = document.getElementById("filtroPrograma").value.sort();
+  const proyecto = document.getElementById("filtroProyecto").value.sort();
+  const actividad = document.getElementById("filtroActividad").value.sort();
+  const anio = document.getElementById("filtroAnio").value.sort();
+  const region = document.getElementById("filtroRegion").value.sort();
+  const inst = document.getElementById("filtroInstitucion").value.sort();
   const alcance = document.getElementById("filtroAlcance").value;
 
   return eventosGlobal.filter(e =>
@@ -275,7 +275,7 @@ function actualizarGraficos() {
   grafico1 = new Chart(document.getElementById("graficoEncuentros"), {
     type: "line",
     data: {
-      labels: Object.keys(porAnio),
+      labels: Object.keys(porAnio).sort(),
       datasets: [{
         label: "Encuentros por año",
         data: Object.values(porAnio)
@@ -298,7 +298,7 @@ function actualizarGraficos() {
   grafico2 = new Chart(document.getElementById("graficoAsistentes"), {
     type: "bar",
     data: {
-      labels: Object.keys(asistentesAnio),
+      labels: Object.keys(asistentesAnio).sort(),
       datasets: [{
         label: "Público asistente por año",
         data: Object.values(asistentesAnio)
@@ -321,7 +321,7 @@ function actualizarGraficos() {
   grafico3 = new Chart(document.getElementById("graficoRegiones"), {
     type: "bar",
     data: {
-      labels: Object.keys(regiones),
+      labels: Object.keys(regiones).sort(),
       datasets: [{
         label: "Actividades por región",
         data: Object.values(regiones)
