@@ -288,7 +288,7 @@ function actualizarGraficos() {
   // Asistentes por año
   const asistentesAnio = {};
   filtrados.forEach(e=>{
-    asistentesAnio[e.anio] = (asistentesAnio[e.anio] || 0) + e.participantes;
+    asistentesAnio[e.anio] = (asistentesAnio[e.anio] || 0) + e.ppresencial;
   });
 
   if (grafico2) grafico2.destroy();
@@ -298,7 +298,7 @@ function actualizarGraficos() {
     data: {
       labels: Object.keys(asistentesAnio),
       datasets: [{
-        label: "Asistentes por año",
+        label: "Público asistente por año",
         data: Object.values(asistentesAnio)
       }]
     },
@@ -321,7 +321,7 @@ function actualizarGraficos() {
     data: {
       labels: Object.keys(regiones),
       datasets: [{
-        label: "Encuentros por región",
+        label: "Actividades por región",
         data: Object.values(regiones)
       }]
     },
@@ -347,6 +347,10 @@ function actualizarVisualizacion() {
 // ================================
 function cargarFiltros() {
 
+  llenarSelect("filtroObjetivo", [...new Set(eventosGlobal.map(e=>e.objetivo))]);
+  llenarSelect("filtroPrograma", [...new Set(eventosGlobal.map(e=>e.programa))]);
+  llenarSelect("filtroProyecto", [...new Set(eventosGlobal.map(e=>e.proyecto))]);
+  llenarSelect("filtroActividad", [...new Set(eventosGlobal.map(e=>e.actividad))]);
   llenarSelect("filtroAnio", [...new Set(eventosGlobal.map(e=>e.anio))]);
   llenarSelect("filtroRegion", [...new Set(eventosGlobal.map(e=>e.region))]);
   llenarSelect("filtroInstitucion", [...new Set(eventosGlobal.map(e=>e.institucion))]);
