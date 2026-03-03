@@ -115,12 +115,12 @@ function inicializarMapa() {
 function aplicarFiltros() {
 
   const objetivo = document.getElementById("filtroObjetivo").value;
-  const programa = document.getElementById("filtroPrograma").value.sort();
-  const proyecto = document.getElementById("filtroProyecto").value.sort();
-  const actividad = document.getElementById("filtroActividad").value.sort();
-  const anio = document.getElementById("filtroAnio").value.sort();
-  const region = document.getElementById("filtroRegion").value.sort();
-  const inst = document.getElementById("filtroInstitucion").value.sort();
+  const programa = document.getElementById("filtroPrograma").value);
+  const proyecto = document.getElementById("filtroProyecto").value;
+  const actividad = document.getElementById("filtroActividad").value;
+  const anio = document.getElementById("filtroAnio").value;
+  const region = document.getElementById("filtroRegion").value;
+  const inst = document.getElementById("filtroInstitucion").value;
   const alcance = document.getElementById("filtroAlcance").value;
 
   return eventosGlobal.filter(e =>
