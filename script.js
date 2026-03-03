@@ -116,7 +116,7 @@ function aplicarFiltros() {
 
   const objetivo = document.getElementById("filtroObjetivo").value;
   const programa = document.getElementById("filtroPrograma").value;
-  const Proyecto = document.getElementById("filtroProyecto").value;
+  const proyecto = document.getElementById("filtroProyecto").value;
   const anio = document.getElementById("filtroAnio").value;
   const region = document.getElementById("filtroRegion").value;
   const inst = document.getElementById("filtroInstitucion").value;
