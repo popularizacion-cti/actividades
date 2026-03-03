@@ -200,7 +200,7 @@ function onEachRegion(feature, layer) {
       - Investigadores: ${invest}<br>
       - Estudiantes: ${estud}<br>
       - Docentes: ${doce}<br>
-      - General: ${gene} <br>
+      - General: ${gene}<br>
     `).openPopup();
   });
 }
@@ -220,11 +220,12 @@ function actualizarLista() {
       <div class="evento-item">
         <strong>${e.nombre}</strong><br>
         Región ${e.region} - ${e.mes} ${e.anio}<br>
-        Público impactado: ${e.investigadores + e.investigadoras} investigadores, ${e.estudiantesm + e.estudiantesf} estudiantes, ${e.docentes} docentes y ${e.ppresencial} público general.<br>
+        Público impactado: ${e.investigadores} investigadores, ${e.estudiantesm} estudiantes, ${e.docentes} docentes y ${e.ppresencial} público general.<br>
       </div>
     `;
   });
 }
+
 
 // ================================
 // INDICADORES
