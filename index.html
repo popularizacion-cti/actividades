@@ -13,8 +13,8 @@
 
     <header>
         <div class="header-content">
-            <h1>Observatorio Nacional de Actividades de Popularización de la Ciencia</h1>
-            <p>Consejo Nacional de Ciencia, Tecnología e Innovación - CONCYTEC</p>
+            <h1>Observatorio Nacional de Popularización de la Ciencia</h1>
+            <p>Consejo Nacional de Ciencia, Tecnología e Innovación Tecnológica - CONCYTEC</p>
         </div>
     </header>
 
@@ -41,7 +41,7 @@
     <div class="main-layout">
         
         <aside class="side-panel">
-            <div class="panel-header">Actividades Filtradas</div>
+            <div class="panel-header">Lista de Actividades</div>
             <div id="listaEventos"></div>
         </aside>
 
@@ -49,7 +49,7 @@
             
             <div class="map-container">
                 <div class="map-controls">
-                    <label>Métrica del Mapa:</label>
+                    <label>Visualizar intensidad por:</label>
                     <select id="selectorMetricaMapa">
                         <option value="actividades">Número de Actividades</option>
                         <option value="participantes">Total Participantes (Est+Doc+Inv)</option>
@@ -64,11 +64,11 @@
 
             <div class="charts-sidebar">
                 <div class="chart-box">
-                    <div class="chart-header" id="tituloGraficoRegion">Por Región</div>
+                    <div class="chart-header" id="tituloGraficoRegion">Distribución Regional</div>
                     <div class="canvas-container"><canvas id="graficoRegiones"></canvas></div>
                 </div>
                 <div class="chart-box">
-                    <div class="chart-header" id="tituloGraficoAnio">Evolución Temporal</div>
+                    <div class="chart-header" id="tituloGraficoAnio">Evolución Histórica</div>
                     <div class="canvas-container"><canvas id="graficoAnio"></canvas></div>
                 </div>
             </div>
