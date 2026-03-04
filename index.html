@@ -13,16 +13,17 @@
 
     <header>
         <div class="header-content">
-            <h1>Observatorio Nacional de Actividades de Popularización de la Ciencia</h1>
+            <h1>Observatorio Nacional Actividades de Popularización de la Ciencia</h1>
             <p>Consejo Nacional de Ciencia, Tecnología e Innovación - CONCYTEC</p>
         </div>
     </header>
 
     <section class="filter-panel">
-        <div class="search-container">
-            <input type="text" id="buscadorTexto" placeholder="🔍 Buscar por nombre de actividad o institución organizadora...">
-        </div>
         <div class="filter-grid">
+            <div class="filter-group search-box">
+                <label>Buscar</label>
+                <input type="text" id="buscadorTexto" placeholder="Nombre, programa, región...">
+            </div>
             <div class="filter-group"><label>Objetivo</label><select id="filtroObjetivo"></select></div>
             <div class="filter-group"><label>Programa</label><select id="filtroPrograma"></select></div>
             <div class="filter-group"><label>Proyecto</label><select id="filtroProyecto"></select></div>
@@ -42,27 +43,25 @@
     </section>
 
     <div class="main-layout">
-        
         <aside class="side-panel">
             <div class="panel-header">
-                <span>Lista de Actividades</span>
-                <button id="btnExportar" class="btn-download">📥 Exportar CSV</button>
+                <span>Lista</span>
+                <button id="btnExportar" class="btn-download">📥 CSV</button>
             </div>
             <div id="listaEventos"></div>
         </aside>
 
         <div class="visual-content">
-            
             <div class="map-container">
                 <div class="map-controls">
-                    <label>Métrica en mapa:</label>
+                    <label>Métrica:</label>
                     <select id="selectorMetricaMapa">
-                        <option value="actividades">Número de Actividades</option>
-                        <option value="participantes">Total Participantes (Est+Doc+Inv)</option>
-                        <option value="asistentes">Público Asistente (General)</option>
+                        <option value="actividades">Actividades</option>
+                        <option value="participantes">Participantes</option>
+                        <option value="asistentes">Asistentes</option>
                         <option value="estudiantes">Estudiantes</option>
                         <option value="docentes">Docentes</option>
-                        <option value="investigadores">Investigadores/as</option>
+                        <option value="investigadores">Investigadores</option>
                     </select>
                 </div>
                 <div id="map"></div>
@@ -74,11 +73,10 @@
                     <div class="canvas-container"><canvas id="graficoRegiones"></canvas></div>
                 </div>
                 <div class="chart-box">
-                    <div class="chart-header" id="tituloGraficoAnio">Evolución Temporal</div>
+                    <div class="chart-header" id="tituloGraficoAnio">Evolución</div>
                     <div class="canvas-container"><canvas id="graficoAnio"></canvas></div>
                 </div>
             </div>
-
         </div>
     </div>
 
