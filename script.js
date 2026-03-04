@@ -6,7 +6,6 @@ let map, geoLayer;
 let graficoRegion, graficoAnio;
 let metricaActual = 'actividades';
 
-/** 1. CARGA DE DATOS **/
 async function cargarDatos() {
     try {
         const response = await fetch(URL);
@@ -40,14 +39,23 @@ async function cargarDatos() {
     }
 }
 
-/** 2. LÓGICA DE FILTRADO Y BÚSQUEDA **/
+function calcularValorPorMetrica(evento, metrica) {
+    if (metrica === 'actividades') return 1;
+    if (metrica === 'participantes') return evento.investigadores + evento.docentes + evento.estudiantes;
+    return evento[metrica] || 0;
+}
+
 function obtenerDatosFiltrados() {
     const v = (id) => document.getElementById(id).value;
     const busqueda = document.getElementById("buscadorTexto").value.toLowerCase();
 
     return eventosGlobal.filter(e => {
+        // Buscador expandido: nombre, programa, proyecto y region
         const coincideBusqueda = !busqueda || 
             e.nombre.toLowerCase().includes(busqueda) || 
+            e.programa.toLowerCase().includes(busqueda) ||
+            e.proyecto.toLowerCase().includes(busqueda) ||
+            e.region.toLowerCase().includes(busqueda) ||
             e.institucion.toLowerCase().includes(busqueda);
 
         return coincideBusqueda &&
@@ -62,7 +70,31 @@ function obtenerDatosFiltrados() {
     });
 }
 
-/** 3. MAPA Y ESTILO DINÁMICO **/
+function estiloMapaDinamico(feature) {
+    const region = feature.properties.NOMBDEP.toUpperCase();
+    const filtrados = obtenerDatosFiltrados();
+    
+    // Suma de la métrica en la región
+    const valorRegion = filtrados
+        .filter(e => e.region === region)
+        .reduce((acc, curr) => acc + calcularValorPorMetrica(curr, metricaActual), 0);
+
+    // Valor máximo actual para la escala
+    const resumen = {};
+    filtrados.forEach(e => {
+        resumen[e.region] = (resumen[e.region] || 0) + calcularValorPorMetrica(e, metricaActual);
+    });
+    const maxVal = Math.max(...Object.values(resumen), 1);
+    const ratio = valorRegion / maxVal;
+
+    return {
+        fillColor: valorRegion > 0 ? '#00A3E0' : 'transparent',
+        fillOpacity: valorRegion > 0 ? (ratio * 0.75 + 0.15) : 0,
+        weight: 1,
+        color: '#fff'
+    };
+}
+
 function inicializarMapa() {
     map = L.map('map', { zoomControl: true, minZoom: 5 }).setView([-9.19, -75.015], 6);
     L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png').addTo(map);
@@ -72,78 +104,49 @@ function inicializarMapa() {
         .then(data => {
             geoLayer = L.geoJSON(data, {
                 style: estiloMapaDinamico,
-                onEachFeature: configurarInteraccionMapa
+                onEachFeature: (f, l) => {
+                    l.on('click', () => {
+                        const reg = f.properties.NOMBDEP.toUpperCase();
+                        const dataReg = obtenerDatosFiltrados().filter(e => e.region === reg);
+                        const nAct = dataReg.length;
+                        const nEst = dataReg.reduce((a,b)=>a+b.estudiantes, 0);
+                        const nDoc = dataReg.reduce((a,b)=>a+b.docentes, 0);
+                        const nInv = dataReg.reduce((a,b)=>a+b.investigadores, 0);
+                        const nAsist = dataReg.reduce((a,b)=>a+b.asistentes, 0);
+
+                        l.bindPopup(`
+                            <div class="custom-popup">
+                                <h3>${reg}</h3><hr>
+                                <b>Actividades:</b> ${nAct}<br>
+                                <b>Participantes:</b> ${(nEst+nDoc+nInv).toLocaleString()}<br>
+                                <small>• Estudiantes: ${nEst.toLocaleString()}</small><br>
+                                <small>• Docentes: ${nDoc.toLocaleString()}</small><br>
+                                <small>• Investigadores: ${nInv.toLocaleString()}</small><br>
+                                <b>Público Asistente:</b> ${nAsist.toLocaleString()}
+                            </div>
+                        `).openPopup();
+                    });
+                }
             }).addTo(map);
         });
 }
 
-function estiloMapaDinamico(feature) {
-    const region = feature.properties.NOMBDEP.toUpperCase();
-    const filtrados = obtenerDatosFiltrados();
-    const dataReg = filtrados.filter(e => e.region === region);
-    
-    let valor = 0;
-    if (metricaActual === 'actividades') valor = dataReg.length;
-    else if (metricaActual === 'participantes') valor = dataReg.reduce((a,b)=>a+b.investigadores+b.docentes+b.estudiantes, 0);
-    else valor = dataReg.reduce((a,b)=>a+(b[metricaActual]||0), 0);
-
-    return {
-        fillColor: valor > 0 ? '#00A3E0' : 'transparent',
-        fillOpacity: valor > 0 ? 0.6 : 0,
-        weight: 1, color: '#fff'
-    };
-}
-
-// MEJORA: Popup con información completa de todas las métricas
-function configurarInteraccionMapa(feature, layer) {
-    layer.on('click', function() {
-        const region = feature.properties.NOMBDEP.toUpperCase();
-        const dataReg = obtenerDatosFiltrados().filter(e => e.region === region);
-        
-        const nAct = dataReg.length;
-        const nEst = dataReg.reduce((a,b)=>a+b.estudiantes, 0);
-        const nDoc = dataReg.reduce((a,b)=>a+b.docentes, 0);
-        const nInv = dataReg.reduce((a,b)=>a+b.investigadores, 0);
-        const nPart = nEst + nDoc + nInv;
-        const nAsist = dataReg.reduce((a,b)=>a+b.asistentes, 0);
-
-        const content = `
-            <div class="custom-popup">
-                <h3>${region}</h3>
-                <hr>
-                <p><b>Actividades:</b> ${nAct}</p>
-                <p><b>Participantes Totales:</b> ${nPart.toLocaleString()}</p>
-                <ul>
-                    <li>Estudiantes: ${nEst.toLocaleString()}</li>
-                    <li>Docentes: ${nDoc.toLocaleString()}</li>
-                    <li>Investigadores: ${nInv.toLocaleString()}</li>
-                </ul>
-                <p><b>Público Asistente:</b> ${nAsist.toLocaleString()}</p>
-            </div>
-        `;
-        layer.bindPopup(content).openPopup();
-    });
-}
-
-/** 4. ACTUALIZACIÓN VISUAL Y GRÁFICAS **/
 function actualizarVisualizacion() {
     const filtrados = obtenerDatosFiltrados();
     if (geoLayer) geoLayer.setStyle(estiloMapaDinamico);
 
-    // KPIs
     const p = filtrados.reduce((a,b)=>a+b.investigadores+b.docentes+b.estudiantes, 0);
     const as = filtrados.reduce((a,b)=>a+b.asistentes, 0);
+
     document.getElementById("kpiCobertura").innerHTML = `<span>Cobertura</span><strong>${new Set(filtrados.map(e=>e.region)).size} Regiones</strong>`;
     document.getElementById("kpiTotal").innerHTML = `<span>Actividades</span><strong>${filtrados.length}</strong>`;
     document.getElementById("kpiParticipantes").innerHTML = `<span>Participantes</span><strong>${p.toLocaleString()}</strong>`;
     document.getElementById("kpiAsistentes").innerHTML = `<span>Asistentes</span><strong>${as.toLocaleString()}</strong>`;
 
-    // Lista
     document.getElementById("listaEventos").innerHTML = filtrados.map(e => `
         <div class="evento-item">
             <h4>${e.nombre}</h4>
-            <p>${e.region} | ${e.mes} ${e.anio}</p>
-            <small>${e.institucion}</small>
+            <p>${e.region} | ${e.anio}</p>
         </div>`).join('');
 
     actualizarGraficas(filtrados);
@@ -159,8 +162,7 @@ function actualizarGraficas(datos) {
 
     const rReg = {}, rAnio = {};
     datos.forEach(e => {
-        const v = (metricaActual === 'actividades') ? 1 : 
-                  (metricaActual === 'participantes') ? (e.investigadores+e.docentes+e.estudiantes) : (e[metricaActual] || 0);
+        const v = calcularValorPorMetrica(e, metricaActual);
         rReg[e.region] = (rReg[e.region] || 0) + v;
         rAnio[e.anio] = (rAnio[e.anio] || 0) + v;
     });
@@ -175,22 +177,24 @@ function actualizarGraficas(datos) {
     const anios = Object.keys(rAnio).sort();
     graficoAnio = new Chart(document.getElementById("graficoAnio"), {
         type: 'line',
-        data: { labels: anios, datasets: [{ data: anios.map(a=>rAnio[a]), borderColor: '#00A3E0', fill: true, tension: 0.4 }] },
+        data: { labels: anios, datasets: [{ data: anios.map(a=>rAnio[a]), borderColor: '#00A3E0', fill: true, tension: 0.4, backgroundColor: 'rgba(0,163,224,0.1)' }] },
         options: { responsive: true, maintainAspectRatio: false, plugins: { legend: false } }
     });
 }
 
-/** 5. FUNCIONES EXTRA: Exportar y Eventos **/
-function exportarCSV() {
-    const datos = obtenerDatosFiltrados();
-    if (datos.length === 0) return;
-    const headers = Object.keys(datos[0]).join(",");
-    const rows = datos.map(d => Object.values(d).map(v => `"${v}"`).join(","));
-    const blob = new Blob([headers + "\n" + rows.join("\n")], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = "reporte_popularizacion.csv";
-    link.click();
+function configurarEventos() {
+    const inputs = document.querySelectorAll(".filter-panel select, #buscadorTexto");
+    inputs.forEach(i => i.addEventListener("change", () => {
+        if(i.tagName === 'SELECT') actualizarFiltrosCascada();
+        actualizarVisualizacion();
+    }));
+    document.getElementById("buscadorTexto").addEventListener("input", actualizarVisualizacion);
+    document.getElementById("selectorMetricaMapa").addEventListener("change", (e) => {
+        metricaActual = e.target.value;
+        actualizarVisualizacion();
+    });
+    document.getElementById("btnExportar").addEventListener("click", exportarCSV);
+    actualizarFiltrosCascada();
 }
 
 function actualizarFiltrosCascada() {
@@ -205,12 +209,16 @@ function actualizarFiltrosCascada() {
     });
 }
 
-function configurarEventos() {
-    actualizarFiltrosCascada();
-    document.querySelectorAll(".filter-panel select").forEach(s => s.addEventListener("change", () => { actualizarFiltrosCascada(); actualizarVisualizacion(); }));
-    document.getElementById("selectorMetricaMapa").addEventListener("change", (e) => { metricaActual = e.target.value; actualizarVisualizacion(); });
-    document.getElementById("btnExportar").addEventListener("click", exportarCSV);
-    document.getElementById("buscadorTexto").addEventListener("input", actualizarVisualizacion);
+function exportarCSV() {
+    const datos = obtenerDatosFiltrados();
+    if (!datos.length) return;
+    const headers = Object.keys(datos[0]).join(",");
+    const rows = datos.map(d => Object.values(d).map(v => `"${v}"`).join(","));
+    const blob = new Blob([headers + "\n" + rows.join("\n")], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = "popularizacion_ciencia.csv";
+    link.click();
 }
 
 cargarDatos();
