@@ -1,19 +1,24 @@
+/**
+ * CONFIGURACIÓN DE DATOS Y VARIABLES GLOBALES
+ */
 const SHEET_ID = "1e9ogOXCAVOoZAM8T9lITUD0K0o1KpnwK-6ZarZmVjSM";
 const URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json`;
 
 let eventosGlobal = [];
 let map, geoLayer;
-let grafico1, grafico2, grafico3;
-
-// Métricas para el mapa
+let graficoRegion, graficoAnio;
 let metricaActual = 'actividades';
 
+/**
+ * 1. CARGA INICIAL DE DATOS
+ */
 async function cargarDatos() {
     try {
         const response = await fetch(URL);
         const text = await response.text();
         const json = JSON.parse(text.substring(text.indexOf("{"), text.lastIndexOf("}") + 1));
 
+        // Mapeo de columnas según la estructura de tu Google Sheet
         eventosGlobal = json.table.rows.map(r => ({
             objetivo: r.c[0]?.v || "",
             programa: r.c[1]?.v || "",
@@ -31,23 +36,25 @@ async function cargarDatos() {
             docentes: Number(r.c[15]?.v) || 0,
             estudiantes: (Number(r.c[16]?.v) || 0) + (Number(r.c[17]?.v) || 0),
             asistentes: (Number(r.c[18]?.v) || 0) + (Number(r.c[19]?.v) || 0),
-            cantActividades: Number(r.c[20]?.v) || 1
         }));
 
         inicializarMapa();
-        configurarEventosSelectors();
+        configurarInteracciones();
         actualizarVisualizacion();
     } catch (e) {
         console.error("Error cargando datos:", e);
     }
 }
 
+/**
+ * 2. CONFIGURACIÓN DEL MAPA (Leaflet)
+ */
 function inicializarMapa() {
     map = L.map('map', {
         zoomControl: true,
         minZoom: 5,
         maxZoom: 7,
-        maxBounds: [[-20, -85], [1, -65]]
+        maxBounds: [[-20, -85], [1, -65]] // Bloqueo en Perú
     }).setView([-9.19, -75.015], 6);
 
     L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png').addTo(map);
@@ -57,159 +64,69 @@ function inicializarMapa() {
         .then(data => {
             geoLayer = L.geoJSON(data, {
                 style: estiloRegion,
-                onEachFeature: onEachRegion
+                onEachFeature: configurarPopupRegion
             }).addTo(map);
         });
 }
 
-// FILTRADO DINÁMICO EN CASCADA
+/**
+ * 3. LÓGICA DE FILTRADO (Cascada)
+ */
 function obtenerDatosFiltrados() {
-    const filtros = {
-        objetivo: document.getElementById("filtroObjetivo").value,
-        programa: document.getElementById("filtroPrograma").value,
-        proyecto: document.getElementById("filtroProyecto").value,
-        nombre: document.getElementById("filtroActividad").value,
-        anio: document.getElementById("filtroAnio").value,
-        region: document.getElementById("filtroRegion").value,
-        institucion: document.getElementById("filtroInstitucion").value,
-        alcance: document.getElementById("filtroAlcance").value
-    };
-
-    return eventosGlobal.filter(e => {
-        return (!filtros.objetivo || e.objetivo === filtros.objetivo) &&
-               (!filtros.programa || e.programa === filtros.programa) &&
-               (!filtros.proyecto || e.proyecto === filtros.proyecto) &&
-               (!filtros.nombre || e.nombre === filtros.nombre) &&
-               (!filtros.anio || e.anio === filtros.anio) &&
-               (!filtros.region || e.region === filtros.region) &&
-               (!filtros.institucion || e.institucion === filtros.institucion) &&
-               (!filtros.alcance || e.alcance === filtros.alcance);
-    });
+    const f = (id) => document.getElementById(id).value;
+    return eventosGlobal.filter(e => 
+        (!f("filtroObjetivo") || e.objetivo === f("filtroObjetivo")) &&
+        (!f("filtroPrograma") || e.programa === f("filtroPrograma")) &&
+        (!f("filtroProyecto") || e.proyecto === f("filtroProyecto")) &&
+        (!f("filtroActividad") || e.nombre === f("filtroActividad")) &&
+        (!f("filtroAnio") || e.anio === f("filtroAnio")) &&
+        (!f("filtroRegion") || e.region === f("filtroRegion")) &&
+        (!f("filtroInstitucion") || e.institucion === f("filtroInstitucion")) &&
+        (!f("filtroAlcance") || e.alcance === f("filtroAlcance"))
+    );
 }
 
 function actualizarFiltrosCascada() {
-    // Esta función actualiza las opciones de los selects basándose en lo que ya está filtrado
     const filtrados = obtenerDatosFiltrados();
-    
-    const actualizarSelect = (id, campo) => {
-        const select = document.getElementById(id);
-        const valorPrevio = select.value;
-        const unicos = [...new Set(filtrados.map(e => e[campo]))].filter(Boolean).sort();
-        
-        select.innerHTML = '<option value="">Todos</option>';
-        unicos.forEach(v => {
-            const opt = document.createElement("option");
-            opt.value = v;
-            opt.textContent = v;
-            if(v === valorPrevio) opt.selected = true;
-            select.appendChild(opt);
-        });
-    };
-
-    // Solo actualizamos los que no tienen selección activa o están "debajo" en la jerarquía
-    // Para simplificar, llenamos todos con lo disponible según el set actual
-    const ids = [
+    const combos = [
         ["filtroObjetivo", "objetivo"], ["filtroPrograma", "programa"],
         ["filtroProyecto", "proyecto"], ["filtroActividad", "nombre"],
         ["filtroAnio", "anio"], ["filtroRegion", "region"],
         ["filtroInstitucion", "institucion"], ["filtroAlcance", "alcance"]
     ];
 
-    ids.forEach(item => {
-        const el = document.getElementById(item[0]);
-        if (!el.value) { // Si el usuario no ha seleccionado nada en este filtro, lo acotamos
-             actualizarSelect(item[0], item[1]);
+    combos.forEach(([id, campo]) => {
+        const combo = document.getElementById(id);
+        if (!combo.value) { // Solo acota filtros que no han sido seleccionados
+            const valorActual = combo.value;
+            const opciones = [...new Set(filtrados.map(e => e[campo]))].filter(Boolean).sort();
+            combo.innerHTML = '<option value="">Todos</option>' + 
+                opciones.map(o => `<option value="${o}" ${o===valorActual?'selected':''}>${o}</option>`).join('');
         }
     });
 }
 
-let metricaActual = 'actividades'; // Valor por defecto
-
-function configurarEventosSelectors() {
-    actualizarFiltrosCascada();
-
-    document.querySelectorAll(".filter-panel select").forEach(s => {
-        s.addEventListener("change", () => {
-            actualizarFiltrosCascada();
-            actualizarVisualizacion();
-        });
-    });
-
-    // CAMBIO CLAVE: Al cambiar la métrica del mapa, actualizamos TODO
-    document.getElementById("selectorMetricaMapa").addEventListener("change", (e) => {
-        metricaActual = e.target.value;
-        actualizarVisualizacion(); 
-    });
-}
-
-// ESTILO DINÁMICO DEL MAPA SEGÚN MÉTRICA
-function estiloRegion(feature) {
-    const regionNombre = feature.properties.NOMBDEP.toUpperCase();
-    const filtrados = obtenerDatosFiltrados();
-    const dataRegion = filtrados.filter(e => e.region === regionNombre);
-
-    let valor = 0;
-    switch(metricaActual) {
-        case 'actividades': valor = dataRegion.length; break;
-        case 'participantes': valor = dataRegion.reduce((a,b) => a + (b.investigadores + b.docentes + b.estudiantes), 0); break;
-        case 'asistentes': valor = dataRegion.reduce((a,b) => a + b.asistentes, 0); break;
-        case 'estudiantes': valor = dataRegion.reduce((a,b) => a + b.estudiantes, 0); break;
-        case 'docentes': valor = dataRegion.reduce((a,b) => a + b.docentes, 0); break;
-        case 'investigadores': valor = dataRegion.reduce((a,b) => a + b.investigadores, 0); break;
-    }
-
-    // Calcular máximo para la intensidad
-    const totalesPorRegion = {};
-    filtrados.forEach(e => {
-        let v = 0;
-        if(metricaActual === 'actividades') v = 1;
-        else if(metricaActual === 'participantes') v = e.investigadores + e.docentes + e.estudiantes;
-        else v = e[metricaActual] || 0;
-        totalesPorRegion[e.region] = (totalesPorRegion[e.region] || 0) + v;
-    });
-    
-    const maxGlobal = Math.max(...Object.values(totalesPorRegion), 1);
-    const intensidad = valor > 0 ? (valor / maxGlobal) : 0;
-
-    return {
-        fillColor: valor > 0 ? '#00A3E0' : 'transparent',
-        fillOpacity: intensidad * 0.9,
-        weight: 1,
-        color: '#fff'
-    };
-}
-
-function onEachRegion(feature, layer) {
-    layer.on("click", () => {
-        const regionNombre = feature.properties.NOMBDEP.toUpperCase();
-        const data = obtenerDatosFiltrados().filter(e => e.region === regionNombre);
-        
-        const sum = (p) => data.reduce((a,b) => a + (b[p] || 0), 0);
-        
-        layer.bindPopup(`
-            <div class="popup-custom">
-                <h3>${regionNombre}</h3>
-                <p><strong>Actividades:</strong> ${data.length}</p>
-                <p><strong>Estudiantes:</strong> ${sum('estudiantes')}</p>
-                <p><strong>Docentes:</strong> ${sum('docentes')}</p>
-                <p><strong>Público Asistente:</strong> ${sum('asistentes')}</p>
-            </div>
-        `).openPopup();
-    });
-}
-
-// ACTUALIZACIÓN DE COMPONENTES
+/**
+ * 4. ACTUALIZACIÓN VISUAL (Gráficas y Mapa)
+ */
 function actualizarVisualizacion() {
-    if (geoLayer) geoLayer.setStyle(estiloRegion);
-    
     const filtrados = obtenerDatosFiltrados();
     
-    // Actualizar KPIs (Indicadores superiores)
-    actualizarKPIs(filtrados);
+    // Sincronizar Mapa
+    if (geoLayer) geoLayer.setStyle(estiloRegion);
+
+    // Actualizar KPIs
+    const regUnicas = new Set(filtrados.map(e => e.region)).size;
+    const part = filtrados.reduce((a,b) => a + b.investigadores + b.docentes + b.estudiantes, 0);
+    const asist = filtrados.reduce((a,b) => a + b.asistentes, 0);
+
+    document.getElementById("kpiCobertura").innerHTML = `<span>Cobertura</span><strong>${regUnicas} Regiones</strong>`;
+    document.getElementById("kpiTotal").innerHTML = `<span>Actividades</span><strong>${filtrados.length}</strong>`;
+    document.getElementById("kpiParticipantes").innerHTML = `<span>Participantes</span><strong>${part.toLocaleString()}</strong>`;
+    document.getElementById("kpiAsistentes").innerHTML = `<span>Asistentes</span><strong>${asist.toLocaleString()}</strong>`;
 
     // Actualizar Lista lateral
-    const lista = document.getElementById("listaEventos");
-    lista.innerHTML = filtrados.map(e => `
+    document.getElementById("listaEventos").innerHTML = filtrados.map(e => `
         <div class="evento-item">
             <h4>${e.nombre}</h4>
             <p>📍 ${e.region} | 📅 ${e.mes} ${e.anio}</p>
@@ -217,83 +134,116 @@ function actualizarVisualizacion() {
         </div>
     `).join('');
 
-    // Actualizar las dos gráficas inferiores
-    actualizarGraficosDinamicos(filtrados);
+    actualizarGraficasDinamicas(filtrados);
 }
 
-function actualizarGraficosDinamicos(datos) {
-    const ctxRegion = document.getElementById("graficoRegiones");
-    const ctxAnio = document.getElementById("graficoAnio");
+function actualizarGraficasDinamicas(datos) {
+    if(graficoRegion) graficoRegion.destroy();
+    if(graficoAnio) graficoAnio.destroy();
 
-    // Obtener el nombre legible de la métrica para los títulos
     const selector = document.getElementById("selectorMetricaMapa");
-    const nombreMetrica = selector.options[selector.selectedIndex].text;
-    
-    document.getElementById("tituloGraficoRegion").innerText = `${nombreMetrica} por Región`;
-    document.getElementById("tituloGraficoAnio").innerText = `${nombreMetrica} por Año`;
+    const textoMetrica = selector.options[selector.selectedIndex].text;
+    document.getElementById("tituloGraficoRegion").innerText = textoMetrica + " por Región";
+    document.getElementById("tituloGraficoAnio").innerText = textoMetrica + " por Año";
 
-    // Destruir gráficas previas si existen
-    if(grafico1) grafico1.destroy();
-    if(grafico2) grafico2.destroy();
-
-    // Procesar datos para las gráficas
-    const infoRegion = {};
-    const infoAnio = {};
+    const dataReg = {}, dataAnio = {};
 
     datos.forEach(e => {
-        let valor = 0;
-        if (metricaActual === 'actividades') valor = 1;
-        else if (metricaActual === 'participantes') valor = e.investigadores + e.docentes + e.estudiantes;
-        else valor = e[metricaActual] || 0;
+        let v = 0;
+        if(metricaActual === 'actividades') v = 1;
+        else if(metricaActual === 'participantes') v = e.investigadores + e.docentes + e.estudiantes;
+        else v = e[metricaActual] || 0;
 
-        infoRegion[e.region] = (infoRegion[e.region] || 0) + valor;
-        infoAnio[e.anio] = (infoAnio[e.anio] || 0) + valor;
+        dataReg[e.region] = (dataReg[e.region] || 0) + v;
+        dataAnio[e.anio] = (dataAnio[e.anio] || 0) + v;
     });
 
-    // Ordenar años cronológicamente
-    const aniosOrdenados = Object.keys(infoAnio).sort();
-    const valoresAnio = aniosOrdenados.map(a => infoAnio[a]);
-
-    // Ordenar regiones por valor (descendente)
-    const regionesOrdenadas = Object.keys(infoRegion).sort((a,b) => infoRegion[b] - infoRegion[a]);
-    const valoresRegion = regionesOrdenadas.map(r => infoRegion[r]);
-
-    const configBase = {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: { legend: { display: false } }
-    };
-
-    // Gráfica 1: Barras por Región
-    grafico1 = new Chart(ctxRegion, {
+    // Gráfica de Regiones (Barras horizontales)
+    const regsSorted = Object.keys(dataReg).sort((a,b) => dataReg[b] - dataReg[a]).slice(0,10);
+    graficoRegion = new Chart(document.getElementById("graficoRegiones"), {
         type: 'bar',
         data: {
-            labels: regionesOrdenadas,
-            datasets: [{
-                data: valoresRegion,
-                backgroundColor: '#00A3E0',
-                borderRadius: 5
-            }]
+            labels: regsSorted,
+            datasets: [{ data: regsSorted.map(r => dataReg[r]), backgroundColor: '#00A3E0', borderRadius: 4 }]
         },
-        options: configBase
+        options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: {display: false} } }
     });
 
-    // Gráfica 2: Línea/Área por Año
-    grafico2 = new Chart(ctxAnio, {
+    // Gráfica de Años (Línea de tiempo)
+    const aniosSorted = Object.keys(dataAnio).sort();
+    graficoAnio = new Chart(document.getElementById("graficoAnio"), {
         type: 'line',
         data: {
-            labels: aniosOrdenados,
-            datasets: [{
-                data: valoresAnio,
-                borderColor: '#00A3E0',
-                backgroundColor: 'rgba(0, 163, 224, 0.1)',
-                fill: true,
-                tension: 0.3,
-                pointRadius: 5,
-                pointBackgroundColor: '#00A3E0'
+            labels: aniosSorted,
+            datasets: [{ 
+                data: aniosSorted.map(a => dataAnio[a]), 
+                borderColor: '#00A3E0', 
+                backgroundColor: 'rgba(0,163,224,0.1)', 
+                fill: true, 
+                tension: 0.4,
+                pointRadius: 4
             }]
         },
-        options: configBase
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: {display: false} } }
+    });
+}
+
+/**
+ * 5. ESTILOS DE MAPA Y POPUPS
+ */
+function estiloRegion(feature) {
+    const region = feature.properties.NOMBDEP.toUpperCase();
+    const filtrados = obtenerDatosFiltrados();
+    const dataRegion = filtrados.filter(e => e.region === region);
+
+    let valorTotal = 0;
+    dataRegion.forEach(e => {
+        if(metricaActual === 'actividades') valorTotal += 1;
+        else if(metricaActual === 'participantes') valorTotal += (e.investigadores + e.docentes + e.estudiantes);
+        else valorTotal += (e[metricaActual] || 0);
+    });
+
+    return {
+        fillColor: valorTotal > 0 ? '#00A3E0' : 'transparent',
+        fillOpacity: valorTotal > 0 ? Math.min(valorTotal / 100 + 0.2, 0.9) : 0,
+        weight: 1,
+        color: '#fff'
+    };
+}
+
+function configurarPopupRegion(feature, layer) {
+    layer.on("click", () => {
+        const region = feature.properties.NOMBDEP.toUpperCase();
+        const data = obtenerDatosFiltrados().filter(e => e.region === region);
+        const sum = (p) => data.reduce((a,b) => a + (b[p] || 0), 0);
+        
+        layer.bindPopup(`
+            <div style="font-family: Inter, sans-serif">
+                <h3 style="margin:0; color:#00A3E0">${region}</h3>
+                <hr>
+                <b>Actividades:</b> ${data.length}<br>
+                <b>Estudiantes:</b> ${sum('estudiantes')}<br>
+                <b>Asistentes:</b> ${sum('asistentes')}
+            </div>
+        `).openPopup();
+    });
+}
+
+/**
+ * 6. EVENTOS DE INTERFAZ
+ */
+function configurarInteracciones() {
+    actualizarFiltrosCascada();
+    document.querySelectorAll(".filter-panel select").forEach(s => {
+        s.addEventListener("change", () => {
+            actualizarFiltrosCascada();
+            actualizarVisualizacion();
+        });
+    });
+
+    document.getElementById("selectorMetricaMapa").addEventListener("change", (e) => {
+        metricaActual = e.target.value;
+        actualizarVisualizacion();
     });
 }
 
