@@ -1,67 +1,71 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="utf-8"/>
-<title>Observatorio POP CTI</title>
-
-<!-- Fuentes y librerías -->
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-<link rel="stylesheet" href="style.css"/>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Observatorio POP CTI - CONCYTEC</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+    <link rel="stylesheet" href="style.css"/>
 </head>
-
 <body>
 
 <header>
-<h1>Observatorio Nacional de Actividades Popularización de la Ciencia - CONCYTEC</h1>
-<p></p>
+    <div class="header-content">
+        <h1>Observatorio Nacional de Popularización de la Ciencia</h1>
+        <p>CONCYTEC - Perú</p>
+    </div>
 </header>
 
-<!-- Filtros -->
-<section class="filters">
-  <p>Objetivo: </p>
-<select id="filtroObjetivo"></select>
-  <p>Programa: </p>
-<select id="filtroPrograma"></select>
-  <p>Proyecto: </p>
-<select id="filtroProyecto"></select>
-  <p>Actividad: </p>
-<select id="filtroActividad"></select>
-  <p>Año: </p>
-<select id="filtroAnio"></select>
-  <p>Región: </p>
-<select id="filtroRegion"></select>
-  <p>Organizador: </p>
-<select id="filtroInstitucion"></select>
-  <p>Alcance: </p>
-<select id="filtroAlcance"></select>
-
+<section class="filter-panel">
+    <div class="filter-grid">
+        <div class="filter-group"><label>Objetivo</label><select id="filtroObjetivo"></select></div>
+        <div class="filter-group"><label>Programa</label><select id="filtroPrograma"></select></div>
+        <div class="filter-group"><label>Proyecto</label><select id="filtroProyecto"></select></div>
+        <div class="filter-group"><label>Actividad</label><select id="filtroActividad"></select></div>
+        <div class="filter-group"><label>Año</label><select id="filtroAnio"></select></div>
+        <div class="filter-group"><label>Región</label><select id="filtroRegion"></select></div>
+        <div class="filter-group"><label>Organizador</label><select id="filtroInstitucion"></select></div>
+        <div class="filter-group"><label>Alcance</label><select id="filtroAlcance"></select></div>
+    </div>
 </section>
 
-<!-- Indicadores -->
 <section class="indicadores">
-<div id="kpiCobertura"></div>
-<div id="kpiTotal"></div>
-<div id="kpiParticipantes"></div>
-<div id="kpiAsistentes"></div>
+    <div class="kpi-card" id="kpiCobertura"></div>
+    <div class="kpi-card" id="kpiTotal"></div>
+    <div class="kpi-card" id="kpiParticipantes"></div>
+    <div class="kpi-card" id="kpiAsistentes"></div>
 </section>
 
-<!-- Layout principal -->
 <div class="main-layout">
-  <div id="listaEventos"></div>
-  <div id="map"></div>
+    <div class="side-panel">
+        <div class="panel-header">Lista de Actividades</div>
+        <div id="listaEventos"></div>
+    </div>
+    <div class="map-container">
+        <div class="map-controls">
+            <span>Visualizar en mapa:</span>
+            <select id="selectorMetricaMapa">
+                <option value="actividades">Número de Actividades</option>
+                <option value="participantes">Total Participantes</option>
+                <option value="asistentes">Público Asistente</option>
+                <option value="estudiantes">Estudiantes</option>
+                <option value="docentes">Docentes</option>
+                <option value="investigadores">Investigadores/as</option>
+            </select>
+        </div>
+        <div id="map"></div>
+    </div>
 </div>
 
-<!-- Gráficos -->
 <section class="graficos">
-  <canvas id="graficoEncuentros"></canvas>
-  <canvas id="graficoAsistentes"></canvas>
-  <canvas id="graficoRegiones"></canvas>
+    <div class="chart-box"><canvas id="graficoEncuentros"></canvas></div>
+    <div class="chart-box"><canvas id="graficoAsistentes"></canvas></div>
+    <div class="chart-box"><canvas id="graficoRegiones"></canvas></div>
 </section>
 
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="script.js"></script>
 </body>
 </html>
