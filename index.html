@@ -44,11 +44,11 @@
     </div>
     <div class="map-container">
         <div class="map-controls">
-            <span>Visualizar en mapa:</span>
+            <span>Visualizar datos de:</span>
             <select id="selectorMetricaMapa">
                 <option value="actividades">Número de Actividades</option>
-                <option value="participantes">Total Participantes</option>
-                <option value="asistentes">Público Asistente</option>
+                <option value="participantes">Total Participantes (Est+Doc+Inv)</option>
+                <option value="asistentes">Público Asistente (Gral)</option>
                 <option value="estudiantes">Estudiantes</option>
                 <option value="docentes">Docentes</option>
                 <option value="investigadores">Investigadores/as</option>
@@ -59,9 +59,14 @@
 </div>
 
 <section class="graficos">
-    <div class="chart-box"><canvas id="graficoEncuentros"></canvas></div>
-    <div class="chart-box"><canvas id="graficoAsistentes"></canvas></div>
-    <div class="chart-box"><canvas id="graficoRegiones"></canvas></div>
+    <div class="chart-box">
+        <div class="chart-header" id="tituloGraficoRegion">Distribución por Región</div>
+        <div class="canvas-container"><canvas id="graficoRegiones"></canvas></div>
+    </div>
+    <div class="chart-box">
+        <div class="chart-header" id="tituloGraficoAnio">Evolución por Año</div>
+        <div class="canvas-container"><canvas id="graficoAnio"></canvas></div>
+    </div>
 </section>
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
