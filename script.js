@@ -275,7 +275,7 @@ function actualizarGraficos() {
   grafico1 = new Chart(document.getElementById("graficoEncuentros"), {
     type: "line",
     data: {
-      labels: Object.keys(porAnio).sort(),
+      labels: Object.keys(porAnio),
       datasets: [{
         label: "Encuentros por año",
         data: Object.values(porAnio)
@@ -298,7 +298,7 @@ function actualizarGraficos() {
   grafico2 = new Chart(document.getElementById("graficoAsistentes"), {
     type: "bar",
     data: {
-      labels: Object.keys(asistentesAnio).sort(),
+      labels: Object.keys(asistentesAnio),
       datasets: [{
         label: "Público asistente por año",
         data: Object.values(asistentesAnio)
@@ -321,7 +321,7 @@ function actualizarGraficos() {
   grafico3 = new Chart(document.getElementById("graficoRegiones"), {
     type: "bar",
     data: {
-      labels: Object.keys(regiones).sort(),
+      labels: Object.keys(regiones),
       datasets: [{
         label: "Actividades por región",
         data: Object.values(regiones)
