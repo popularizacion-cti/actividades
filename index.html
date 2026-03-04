@@ -13,12 +13,15 @@
 
     <header>
         <div class="header-content">
-            <h1>Observatorio Nacional de Popularización de la Ciencia</h1>
-            <p>Consejo Nacional de Ciencia, Tecnología e Innovación Tecnológica - CONCYTEC</p>
+            <h1>Observatorio Nacional de Actividades de Popularización de la Ciencia</h1>
+            <p>Consejo Nacional de Ciencia, Tecnología e Innovación - CONCYTEC</p>
         </div>
     </header>
 
     <section class="filter-panel">
+        <div class="search-container">
+            <input type="text" id="buscadorTexto" placeholder="🔍 Buscar por nombre de actividad o institución organizadora...">
+        </div>
         <div class="filter-grid">
             <div class="filter-group"><label>Objetivo</label><select id="filtroObjetivo"></select></div>
             <div class="filter-group"><label>Programa</label><select id="filtroPrograma"></select></div>
@@ -41,7 +44,10 @@
     <div class="main-layout">
         
         <aside class="side-panel">
-            <div class="panel-header">Actividades Detalladas</div>
+            <div class="panel-header">
+                <span>Lista de Actividades</span>
+                <button id="btnExportar" class="btn-download">📥 Exportar CSV</button>
+            </div>
             <div id="listaEventos"></div>
         </aside>
 
@@ -49,7 +55,7 @@
             
             <div class="map-container">
                 <div class="map-controls">
-                    <label>Métrica actual:</label>
+                    <label>Métrica en mapa:</label>
                     <select id="selectorMetricaMapa">
                         <option value="actividades">Número de Actividades</option>
                         <option value="participantes">Total Participantes (Est+Doc+Inv)</option>
@@ -64,11 +70,11 @@
 
             <div class="charts-sidebar">
                 <div class="chart-box">
-                    <div class="chart-header" id="tituloGraficoRegion">Distribución Regional</div>
+                    <div class="chart-header" id="tituloGraficoRegion">Por Región</div>
                     <div class="canvas-container"><canvas id="graficoRegiones"></canvas></div>
                 </div>
                 <div class="chart-box">
-                    <div class="chart-header" id="tituloGraficoAnio">Evolución Histórica</div>
+                    <div class="chart-header" id="tituloGraficoAnio">Evolución Temporal</div>
                     <div class="canvas-container"><canvas id="graficoAnio"></canvas></div>
                 </div>
             </div>
