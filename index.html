@@ -4,73 +4,80 @@
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Observatorio POP CTI - CONCYTEC</title>
+    
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
     <link rel="stylesheet" href="style.css"/>
 </head>
 <body>
 
-<header>
-    <div class="header-content">
-        <h1>Observatorio Nacional de Popularización de la Ciencia</h1>
-        <p>CONCYTEC - Perú</p>
-    </div>
-</header>
-
-<section class="filter-panel">
-    <div class="filter-grid">
-        <div class="filter-group"><label>Objetivo</label><select id="filtroObjetivo"></select></div>
-        <div class="filter-group"><label>Programa</label><select id="filtroPrograma"></select></div>
-        <div class="filter-group"><label>Proyecto</label><select id="filtroProyecto"></select></div>
-        <div class="filter-group"><label>Actividad</label><select id="filtroActividad"></select></div>
-        <div class="filter-group"><label>Año</label><select id="filtroAnio"></select></div>
-        <div class="filter-group"><label>Región</label><select id="filtroRegion"></select></div>
-        <div class="filter-group"><label>Organizador</label><select id="filtroInstitucion"></select></div>
-        <div class="filter-group"><label>Alcance</label><select id="filtroAlcance"></select></div>
-    </div>
-</section>
-
-<section class="indicadores">
-    <div class="kpi-card" id="kpiCobertura"></div>
-    <div class="kpi-card" id="kpiTotal"></div>
-    <div class="kpi-card" id="kpiParticipantes"></div>
-    <div class="kpi-card" id="kpiAsistentes"></div>
-</section>
-
-<div class="main-layout">
-    <div class="side-panel">
-        <div class="panel-header">Lista de Actividades</div>
-        <div id="listaEventos"></div>
-    </div>
-    <div class="map-container">
-        <div class="map-controls">
-            <span>Visualizar datos de:</span>
-            <select id="selectorMetricaMapa">
-                <option value="actividades">Número de Actividades</option>
-                <option value="participantes">Total Participantes (Est+Doc+Inv)</option>
-                <option value="asistentes">Público Asistente (Gral)</option>
-                <option value="estudiantes">Estudiantes</option>
-                <option value="docentes">Docentes</option>
-                <option value="investigadores">Investigadores/as</option>
-            </select>
+    <header>
+        <div class="header-content">
+            <h1>Observatorio Nacional de Actividades de Popularización de la Ciencia</h1>
+            <p>Consejo Nacional de Ciencia, Tecnología e Innovación - CONCYTEC</p>
         </div>
-        <div id="map"></div>
-    </div>
-</div>
+    </header>
 
-<section class="graficos">
-    <div class="chart-box">
-        <div class="chart-header" id="tituloGraficoRegion">Distribución por Región</div>
-        <div class="canvas-container"><canvas id="graficoRegiones"></canvas></div>
-    </div>
-    <div class="chart-box">
-        <div class="chart-header" id="tituloGraficoAnio">Evolución por Año</div>
-        <div class="canvas-container"><canvas id="graficoAnio"></canvas></div>
-    </div>
-</section>
+    <section class="filter-panel">
+        <div class="filter-grid">
+            <div class="filter-group"><label>Objetivo</label><select id="filtroObjetivo"></select></div>
+            <div class="filter-group"><label>Programa</label><select id="filtroPrograma"></select></div>
+            <div class="filter-group"><label>Proyecto</label><select id="filtroProyecto"></select></div>
+            <div class="filter-group"><label>Actividad</label><select id="filtroActividad"></select></div>
+            <div class="filter-group"><label>Año</label><select id="filtroAnio"></select></div>
+            <div class="filter-group"><label>Región</label><select id="filtroRegion"></select></div>
+            <div class="filter-group"><label>Organizador</label><select id="filtroInstitucion"></select></div>
+            <div class="filter-group"><label>Alcance</label><select id="filtroAlcance"></select></div>
+        </div>
+    </section>
 
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="script.js"></script>
+    <section class="indicadores">
+        <div class="kpi-card" id="kpiCobertura"></div>
+        <div class="kpi-card" id="kpiTotal"></div>
+        <div class="kpi-card" id="kpiParticipantes"></div>
+        <div class="kpi-card" id="kpiAsistentes"></div>
+    </section>
+
+    <div class="main-layout">
+        
+        <aside class="side-panel">
+            <div class="panel-header">Actividades Filtradas</div>
+            <div id="listaEventos"></div>
+        </aside>
+
+        <div class="visual-content">
+            
+            <div class="map-container">
+                <div class="map-controls">
+                    <label>Métrica del Mapa:</label>
+                    <select id="selectorMetricaMapa">
+                        <option value="actividades">Número de Actividades</option>
+                        <option value="participantes">Total Participantes (Est+Doc+Inv)</option>
+                        <option value="asistentes">Público Asistente (General)</option>
+                        <option value="estudiantes">Estudiantes</option>
+                        <option value="docentes">Docentes</option>
+                        <option value="investigadores">Investigadores/as</option>
+                    </select>
+                </div>
+                <div id="map"></div>
+            </div>
+
+            <div class="charts-sidebar">
+                <div class="chart-box">
+                    <div class="chart-header" id="tituloGraficoRegion">Por Región</div>
+                    <div class="canvas-container"><canvas id="graficoRegiones"></canvas></div>
+                </div>
+                <div class="chart-box">
+                    <div class="chart-header" id="tituloGraficoAnio">Evolución Temporal</div>
+                    <div class="canvas-container"><canvas id="graficoAnio"></canvas></div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>
