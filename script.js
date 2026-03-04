@@ -123,8 +123,9 @@ function actualizarFiltrosCascada() {
     });
 }
 
+let metricaActual = 'actividades'; // Valor por defecto
+
 function configurarEventosSelectors() {
-    // Llenado inicial
     actualizarFiltrosCascada();
 
     document.querySelectorAll(".filter-panel select").forEach(s => {
@@ -134,9 +135,10 @@ function configurarEventosSelectors() {
         });
     });
 
+    // CAMBIO CLAVE: Al cambiar la métrica del mapa, actualizamos TODO
     document.getElementById("selectorMetricaMapa").addEventListener("change", (e) => {
         metricaActual = e.target.value;
-        geoLayer.setStyle(estiloRegion);
+        actualizarVisualizacion(); 
     });
 }
 
@@ -202,17 +204,10 @@ function actualizarVisualizacion() {
     
     const filtrados = obtenerDatosFiltrados();
     
-    // KPIs
-    const regUnicas = new Set(filtrados.map(e => e.region)).size;
-    const totalPart = filtrados.reduce((a,b) => a + b.investigadores + b.docentes + b.estudiantes, 0);
-    const totalAsist = filtrados.reduce((a,b) => a + b.asistentes, 0);
+    // Actualizar KPIs (Indicadores superiores)
+    actualizarKPIs(filtrados);
 
-    document.getElementById("kpiCobertura").innerHTML = `<span>Cobertura</span><strong>${regUnicas} Regiones</strong>`;
-    document.getElementById("kpiTotal").innerHTML = `<span>Actividades</span><strong>${filtrados.length}</strong>`;
-    document.getElementById("kpiParticipantes").innerHTML = `<span>Participantes</span><strong>${totalPart.toLocaleString()}</strong>`;
-    document.getElementById("kpiAsistentes").innerHTML = `<span>Asistentes</span><strong>${totalAsist.toLocaleString()}</strong>`;
-
-    // Lista
+    // Actualizar Lista lateral
     const lista = document.getElementById("listaEventos");
     lista.innerHTML = filtrados.map(e => `
         <div class="evento-item">
@@ -222,19 +217,46 @@ function actualizarVisualizacion() {
         </div>
     `).join('');
 
-    actualizarGraficos(filtrados);
+    // Actualizar las dos gráficas inferiores
+    actualizarGraficosDinamicos(filtrados);
 }
 
-function actualizarGraficos(datos) {
-    const ctx1 = document.getElementById("graficoEncuentros");
-    const ctx2 = document.getElementById("graficoAsistentes");
-    const ctx3 = document.getElementById("graficoRegiones");
+function actualizarGraficosDinamicos(datos) {
+    const ctxRegion = document.getElementById("graficoRegiones");
+    const ctxAnio = document.getElementById("graficoAnio");
 
-    // Lógica de agregación para gráficos...
-    // (Similar a tu versión pero con datos.reduce para mayor limpieza)
+    // Obtener el nombre legible de la métrica para los títulos
+    const selector = document.getElementById("selectorMetricaMapa");
+    const nombreMetrica = selector.options[selector.selectedIndex].text;
+    
+    document.getElementById("tituloGraficoRegion").innerText = `${nombreMetrica} por Región`;
+    document.getElementById("tituloGraficoAnio").innerText = `${nombreMetrica} por Año`;
+
+    // Destruir gráficas previas si existen
     if(grafico1) grafico1.destroy();
     if(grafico2) grafico2.destroy();
-    if(grafico3) grafico3.destroy();
+
+    // Procesar datos para las gráficas
+    const infoRegion = {};
+    const infoAnio = {};
+
+    datos.forEach(e => {
+        let valor = 0;
+        if (metricaActual === 'actividades') valor = 1;
+        else if (metricaActual === 'participantes') valor = e.investigadores + e.docentes + e.estudiantes;
+        else valor = e[metricaActual] || 0;
+
+        infoRegion[e.region] = (infoRegion[e.region] || 0) + valor;
+        infoAnio[e.anio] = (infoAnio[e.anio] || 0) + valor;
+    });
+
+    // Ordenar años cronológicamente
+    const aniosOrdenados = Object.keys(infoAnio).sort();
+    const valoresAnio = aniosOrdenados.map(a => infoAnio[a]);
+
+    // Ordenar regiones por valor (descendente)
+    const regionesOrdenadas = Object.keys(infoRegion).sort((a,b) => infoRegion[b] - infoRegion[a]);
+    const valoresRegion = regionesOrdenadas.map(r => infoRegion[r]);
 
     const configBase = {
         responsive: true,
@@ -242,15 +264,34 @@ function actualizarGraficos(datos) {
         plugins: { legend: { display: false } }
     };
 
-    // Ejemplo Gráfico Regiones
-    const regData = {};
-    datos.forEach(e => regData[e.region] = (regData[e.region] || 0) + 1);
-    
-    grafico3 = new Chart(ctx3, {
+    // Gráfica 1: Barras por Región
+    grafico1 = new Chart(ctxRegion, {
         type: 'bar',
         data: {
-            labels: Object.keys(regData),
-            datasets: [{ label: 'Actividades', data: Object.values(regData), backgroundColor: '#00A3E0' }]
+            labels: regionesOrdenadas,
+            datasets: [{
+                data: valoresRegion,
+                backgroundColor: '#00A3E0',
+                borderRadius: 5
+            }]
+        },
+        options: configBase
+    });
+
+    // Gráfica 2: Línea/Área por Año
+    grafico2 = new Chart(ctxAnio, {
+        type: 'line',
+        data: {
+            labels: aniosOrdenados,
+            datasets: [{
+                data: valoresAnio,
+                borderColor: '#00A3E0',
+                backgroundColor: 'rgba(0, 163, 224, 0.1)',
+                fill: true,
+                tension: 0.3,
+                pointRadius: 5,
+                pointBackgroundColor: '#00A3E0'
+            }]
         },
         options: configBase
     });
