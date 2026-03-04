@@ -115,7 +115,7 @@ function inicializarMapa() {
 function aplicarFiltros() {
 
   const objetivo = document.getElementById("filtroObjetivo").value;
-  const programa = document.getElementById("filtroPrograma").value);
+  const programa = document.getElementById("filtroPrograma").value;
   const proyecto = document.getElementById("filtroProyecto").value;
   const actividad = document.getElementById("filtroActividad").value;
   const anio = document.getElementById("filtroAnio").value;
