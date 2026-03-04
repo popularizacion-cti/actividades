@@ -131,20 +131,39 @@ header {
 
 .graficos {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    grid-template-columns: 1fr 1fr; /* Exactamente dos columnas */
     gap: 1.5rem;
     padding: 1.5rem;
+    background: #F8FAFC;
 }
 
 .chart-box {
-    background: var(--white);
-    padding: 1.5rem;
+    background: white;
+    padding: 1.2rem;
     border-radius: 12px;
-    height: 350px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    height: 400px;
+    display: flex;
+    flex-direction: column;
 }
 
-@media (max-width: 1024px) {
-    .main-layout { flex-direction: column; height: auto; }
-    .side-panel { flex: none; height: 400px; }
-    #map { height: 400px; }
+.chart-header {
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 1rem;
+    font-size: 1rem;
+    border-left: 4px solid #00A3E0;
+    padding-left: 10px;
+}
+
+.canvas-container {
+    flex: 1;
+    position: relative;
+    min-height: 0; /* Importante para que Chart.js respete el contenedor */
+}
+
+@media (max-width: 900px) {
+    .graficos {
+        grid-template-columns: 1fr; /* Una columna en móviles */
+    }
 }
