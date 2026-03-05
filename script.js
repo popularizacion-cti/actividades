@@ -90,64 +90,70 @@ function estiloMapaDinamico(feature) {
 }
 
 /**
- * 2. CONFIGURACIÓN DEL MAPA (BLOQUEADO CON ZOOM FRACCIONARIO)
+ * 2. CONFIGURACIÓN DEL MAPA (BLOQUEADO CON POPUP FUNCIONAL)
  */
 function inicializarMapa() {
     if (map) map.remove();
 
     map = L.map('map', {
-        // --- BLOQUEO DE INTERACCIÓN ---
         zoomControl: false,
-        dragging: false,
+        dragging: false,       // Bloqueado
         scrollWheelZoom: false,
+        doubleClickZoom: false,
         touchZoom: false,
         boxZoom: false,
         keyboard: false,
+        zoomSnap: 0.1,
+        minZoom: 5.5,
+        maxZoom: 5.5,
+        tap: true,             // 👈 IMPORTANTE: Ayuda a que los clics funcionen en móviles/táctiles
+        interactive: true      // Asegura que los elementos internos respondan
+    }).setView([-9.19, -75.015], 5.5);
 
-        // --- PRECISIÓN DE ZOOM (LA SOLUCIÓN) ---
-        zoomSnap: 0.1,                // Permite saltos de zoom de 0.1 en lugar de 1
-        zoomDelta: 0.1,               // Diferencia de zoom aplicada en cada paso
-        minZoom: 5.5,                 // Nivel fijo
-        maxZoom: 5.5,                 // Al ser igual al anterior, queda bloqueado
-        
-        attributionControl: true      // Mantener los créditos del mapa
-    }).setView([-9.19, -75.015], 5.5); // Centrado con zoom decimal
-
-    // Usamos una capa de mapa base que soporte bien el re-escalado decimal
     L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
         detectRetina: true
     }).addTo(map);
 
-    // Carga del GeoJSON (se mantiene igual)
     fetch('peru-regiones.geojson')
         .then(res => res.json())
         .then(data => {
             geoLayer = L.geoJSON(data, {
                 style: estiloMapaDinamico,
                 onEachFeature: (f, l) => {
-                    l.on('click', () => {
-                        const reg = f.properties.NOMBDEP.toUpperCase();
-                        const dataReg = obtenerDatosFiltrados().filter(e => e.region === reg);
-                        const v = calcularValorMetrica(dataReg);
-                        
-                        // Resumen para el popup
-                        const nAct = dataReg.length;
-                        const nEst = dataReg.reduce((a,b)=>a+b.estudiantes, 0);
-                        const nDoc = dataReg.reduce((a,b)=>a+b.docentes, 0);
-                        const nInv = dataReg.reduce((a,b)=>a+b.investigadores, 0);
-                        const nAsist = dataReg.reduce((a,b)=>a+b.asistentes, 0);
+                    // Forzamos que la capa sea interactiva
+                    l.bindPopup("", { closeButton: true }); 
+                    
+                    l.on('click', (e) => {
+                        // Evitamos que el evento se propague
+                        L.DomEvent.stopPropagation(e);
 
-                        l.bindPopup(`
+                        const reg = f.properties.NOMBDEP.toUpperCase();
+                        const dataReg = obtenerDatosFiltrados().filter(ev => ev.region === reg);
+                        
+                        // Cálculos para el popup
+                        const nAct = dataReg.length;
+                        const nEst = dataReg.reduce((a,b) => a + (b.estudiantes || 0), 0);
+                        const nDoc = dataReg.reduce((a,b) => a + (b.docentes || 0), 0);
+                        const nInv = dataReg.reduce((a,b) => a + (b.investigadores || 0), 0);
+                        const nAsist = dataReg.reduce((a,b) => a + (b.asistentes || 0), 0);
+
+                        const content = `
                             <div class="custom-popup">
-                                <h3>${reg}</h3><hr>
-                                <b>Actividades:</b> ${nAct}<br>
-                                <b>Participantes:</b> ${(nEst+nDoc+nInv).toLocaleString()}<br>
-                                <small>• Estudiantes: ${nEst.toLocaleString()}</small><br>
-                                <small>• Docentes: ${nDoc.toLocaleString()}</small><br>
-                                <small>• Investigadores: ${nInv.toLocaleString()}</small><br>
-                                <b>Asistentes:</b> ${nAsist.toLocaleString()}
+                                <h3 style="margin:0; color:#00A3E0;">${reg}</h3>
+                                <hr style="margin:5px 0; border:0; border-top:1px solid #eee;">
+                                <p style="margin:2px 0; font-size:13px;"><b>Actividades:</b> ${nAct}</p>
+                                <p style="margin:2px 0; font-size:13px;"><b>Participantes:</b> ${(nEst+nDoc+nInv).toLocaleString()}</p>
+                                <ul style="margin:0; padding-left:15px; font-size:11px; color:#666;">
+                                    <li>Estudiantes: ${nEst.toLocaleString()}</li>
+                                    <li>Docentes: ${nDoc.toLocaleString()}</li>
+                                    <li>Investigadores: ${nInv.toLocaleString()}</li>
+                                </ul>
+                                <p style="margin:2px 0; font-size:13px;"><b>Asistentes:</b> ${nAsist.toLocaleString()}</p>
                             </div>
-                        `).openPopup();
+                        `;
+                        
+                        l.setPopupContent(content);
+                        l.openPopup();
                     });
                 }
             }).addTo(map);
