@@ -90,7 +90,7 @@ function estiloMapaDinamico(feature) {
 }
 
 function inicializarMapa() {
-    map = L.map('map', { zoomControl: false, zoom: false }).setView([-9.19, -75.015], 5.5);
+    map = L.map('map', { zoomControl: false, minZoom: 5, maxZoom:5 }).setView([-9.19, -75.015], 5);
     L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png').addTo(map);
 
     fetch('peru-regiones.geojson')
