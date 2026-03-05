@@ -100,7 +100,6 @@ function inicializarMapa() {
         zoomControl: false,
         dragging: false,
         scrollWheelZoom: false,
-        doubleClickZoom: false,
         touchZoom: false,
         boxZoom: false,
         keyboard: false,
