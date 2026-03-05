@@ -180,7 +180,7 @@ function actualizarVisualizacion() {
     const inv = filtrados.reduce((a,b)=>a+b.investigadores, 0);
     let htmlPart = `<span>Participantes</span><strong>${(est+doc+inv).toLocaleString()}</strong>`;
     let detailPart = [];
-    if(est > 0) detailPart.push(`${est.toLocaleString()} Alum.`);
+    if(est > 0) detailPart.push(`${est.toLocaleString()} Est.`);
     if(doc > 0) detailPart.push(`${doc.toLocaleString()} Doc.`);
     if(inv > 0) detailPart.push(`${inv.toLocaleString()} Inv.`);
     if(detailPart.length > 0) htmlPart += `<small>${detailPart.join(' | ')}</small>`;
@@ -191,7 +191,7 @@ function actualizarVisualizacion() {
     const virt = filtrados.reduce((a,b)=>a+b.virtuales, 0);
     let htmlAsist = `<span>Asistentes</span><strong>${(pres+virt).toLocaleString()}</strong>`;
     let detailAsist = [];
-    if(pres > 0) detailAsist.push(`${pres.toLocaleString()} Pres.`);
+    if(pres > 0) detailAsist.push(`${pres.toLocaleString()} Presen.`);
     if(virt > 0) detailAsist.push(`${virt.toLocaleString()} Virt.`);
     if(detailAsist.length > 0) htmlAsist += `<small>${detailAsist.join(' | ')}</small>`;
     document.getElementById("kpiAsistentes").innerHTML = htmlAsist;
