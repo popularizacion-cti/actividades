@@ -60,7 +60,7 @@ header p { margin: 4px 0 0 0; font-size: 0.85rem; opacity: 0.9; }
     .side-panel { flex: none; height: 300px; }
     
     /* Solución: Definir altura fija para el mapa en móviles */
-    .map-container { flex: none; height: 500px; width: 100%; }
+    .map-container { flex: none; height: 600px; width: 100%; }
 
     .charts-sidebar { flex: none;
         flex-direction: column; /* Cambiado a column para mejor visualización en pantallas pequeñas */
