@@ -53,9 +53,18 @@ header p { margin: 4px 0 0 0; font-size: 0.85rem; opacity: 0.9; }
 .custom-popup h3 { margin: 0; color: var(--primary); font-size: 1rem; }
 .custom-popup small { color: var(--slate); font-size: 0.7rem; }
 
+/* RESPONSIVIDAD CORREGIDA */
 @media (max-width: 1100px) {
-    .main-layout { flex-direction: column; height: auto; }
-    .visual-content { flex-direction: column; }
-    .charts-sidebar { flex-direction: row; height: 300px; }
+    .main-layout { flex-direction: column; height: auto; min-height: unset;}
+    .visual-content { flex-direction: column; gap: 20px; }
+    .side-panel { flex: none; height: 300px; }
+    
+    /* Solución: Definir altura fija para el mapa en móviles */
+    .map-container { flex: none; height: 500px; width: 100%; }
+
+    .charts-sidebar { flex: none;
+        flex-direction: column; /* Cambiado a column para mejor visualización en pantallas pequeñas */
+        height: auto; }
+    .chart-box { height: 350px; }
     .indicadores { grid-template-columns: repeat(2, 1fr); }
 }
