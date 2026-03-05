@@ -32,10 +32,15 @@
             <div class="filter-group"><label>Región</label><select id="filtroRegion"></select></div>
             <div class="filter-group"><label>Organizador</label><select id="filtroInstitucion"></select></div>
             <div class="filter-group"><label>Alcance</label><select id="filtroAlcance"></select></div>
+            <div class="filter-group action-group">
+                <label>&nbsp;</label>
+                <button id="btnLimpiar" class="btn-clear">Limpiar Filtros</button>
+            </div>
         </div>
     </section>
 
     <section class="indicadores">
+        <div class="kpi-card" id="kpiAnios"></div>
         <div class="kpi-card" id="kpiCobertura"></div>
         <div class="kpi-card" id="kpiTotal"></div>
         <div class="kpi-card" id="kpiParticipantes"></div>
@@ -45,7 +50,7 @@
     <div class="main-layout">
         <aside class="side-panel">
             <div class="panel-header">
-                <span>Lista</span>
+                <span>Lista de actividades</span>
                 <button id="btnExportar" class="btn-download">📥 CSV</button>
             </div>
             <div id="listaEventos"></div>
