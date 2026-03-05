@@ -89,10 +89,37 @@ function estiloMapaDinamico(feature) {
     };
 }
 
+/**
+ * 2. CONFIGURACIÓN DEL MAPA (BLOQUEADO CON ZOOM FRACCIONARIO)
+ */
 function inicializarMapa() {
-    map = L.map('map', { zoomControl: false, minZoom: 5, maxZoom: 5 , scroll: false }).setView([-9.19, -75.015], 5);
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png').addTo(map);
+    if (map) map.remove();
 
+    map = L.map('map', {
+        // --- BLOQUEO DE INTERACCIÓN ---
+        zoomControl: false,
+        dragging: false,
+        scrollWheelZoom: false,
+        doubleClickZoom: false,
+        touchZoom: false,
+        boxZoom: false,
+        keyboard: false,
+
+        // --- PRECISIÓN DE ZOOM (LA SOLUCIÓN) ---
+        zoomSnap: 0.1,                // Permite saltos de zoom de 0.1 en lugar de 1
+        zoomDelta: 0.1,               // Diferencia de zoom aplicada en cada paso
+        minZoom: 5.5,                 // Nivel fijo
+        maxZoom: 5.5,                 // Al ser igual al anterior, queda bloqueado
+        
+        attributionControl: true      // Mantener los créditos del mapa
+    }).setView([-9.19, -75.015], 5.5); // Centrado con zoom decimal
+
+    // Usamos una capa de mapa base que soporte bien el re-escalado decimal
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+        detectRetina: true
+    }).addTo(map);
+
+    // Carga del GeoJSON (se mantiene igual)
     fetch('peru-regiones.geojson')
         .then(res => res.json())
         .then(data => {
@@ -102,6 +129,9 @@ function inicializarMapa() {
                     l.on('click', () => {
                         const reg = f.properties.NOMBDEP.toUpperCase();
                         const dataReg = obtenerDatosFiltrados().filter(e => e.region === reg);
+                        const v = calcularValorMetrica(dataReg);
+                        
+                        // Resumen para el popup
                         const nAct = dataReg.length;
                         const nEst = dataReg.reduce((a,b)=>a+b.estudiantes, 0);
                         const nDoc = dataReg.reduce((a,b)=>a+b.docentes, 0);
