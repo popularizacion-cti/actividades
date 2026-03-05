@@ -43,7 +43,7 @@ async function cargarDatos() {
 
 function calcularValorPorMetrica(evento, metrica) {
     if (metrica === 'actividades') return 1;
-    if (metrica === 'participantes') return evento.investigadores + evento.docentes + evento.estudiantes;
+    if (metrica === 'participantes') return (evento.investigadores || 0) + (evento.docentes || 0) + (evento.estudiantes || 0);
     return evento[metrica] || 0;
 }
 
@@ -71,48 +71,15 @@ function obtenerDatosFiltrados() {
     });
 }
 
-function estiloMapaDinamico(feature) {
-    const region = feature.properties.NOMBDEP.toUpperCase();
-    const filtrados = obtenerDatosFiltrados();
-    const valorRegion = filtrados.filter(e => e.region === region)
-                                 .reduce((acc, curr) => acc + calcularValorPorMetrica(curr, metricaActual), 0);
-
-    const resumen = {};
-    filtrados.forEach(e => resumen[e.region] = (resumen[e.region] || 0) + calcularValorPorMetrica(e, metricaActual));
-    const maxVal = Math.max(...Object.values(resumen), 1);
-    const ratio = valorRegion / maxVal;
-
-    return {
-        fillColor: valorRegion > 0 ? '#00A3E0' : 'transparent',
-        fillOpacity: valorRegion > 0 ? (ratio * 0.75 + 0.15) : 0,
-        weight: 1, color: '#fff'
-    };
-}
-
-/**
- * 2. CONFIGURACIÓN DEL MAPA (BLOQUEADO CON POPUP FUNCIONAL)
- */
 function inicializarMapa() {
     if (map) map.remove();
-
     map = L.map('map', {
-        zoomControl: false,
-        dragging: false,       // Bloqueado
-        scrollWheelZoom: false,
-        doubleClickZoom: false,
-        touchZoom: false,
-        boxZoom: false,
-        keyboard: false,
-        zoomSnap: 0.1,
-        minZoom: 5.5,
-        maxZoom: 5.5,
-        tap: true,             // 👈 IMPORTANTE: Ayuda a que los clics funcionen en móviles/táctiles
-        interactive: true      // Asegura que los elementos internos respondan
+        zoomControl: false, dragging: false, scrollWheelZoom: false, doubleClickZoom: false,
+        touchZoom: false, boxZoom: false, keyboard: false, zoomSnap: 0.1,
+        minZoom: 5.5, maxZoom: 5.5, tap: true, interactive: true
     }).setView([-9.19, -75.015], 5.5);
 
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-        detectRetina: true
-    }).addTo(map);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png').addTo(map);
 
     fetch('peru-regiones.geojson')
         .then(res => res.json())
@@ -120,44 +87,47 @@ function inicializarMapa() {
             geoLayer = L.geoJSON(data, {
                 style: estiloMapaDinamico,
                 onEachFeature: (f, l) => {
-                    // Forzamos que la capa sea interactiva
-                    l.bindPopup("", { closeButton: true }); 
-                    
                     l.on('click', (e) => {
-                        // Evitamos que el evento se propague
                         L.DomEvent.stopPropagation(e);
-
                         const reg = f.properties.NOMBDEP.toUpperCase();
                         const dataReg = obtenerDatosFiltrados().filter(ev => ev.region === reg);
-                        
-                        // Cálculos para el popup
                         const nAct = dataReg.length;
-                        const nEst = dataReg.reduce((a,b) => a + (b.estudiantes || 0), 0);
-                        const nDoc = dataReg.reduce((a,b) => a + (b.docentes || 0), 0);
-                        const nInv = dataReg.reduce((a,b) => a + (b.investigadores || 0), 0);
-                        const nAsist = dataReg.reduce((a,b) => a + (b.asistentes || 0), 0);
+                        const nEst = dataReg.reduce((a,b)=>a+(b.estudiantes||0), 0);
+                        const nDoc = dataReg.reduce((a,b)=>a+(b.docentes||0), 0);
+                        const nInv = dataReg.reduce((a,b)=>a+(b.investigadores||0), 0);
+                        const nAsist = dataReg.reduce((a,b)=>a+(b.asistentes||0), 0);
 
-                        const content = `
+                        l.bindPopup(`
                             <div class="custom-popup">
-                                <h3 style="margin:0; color:#00A3E0;">${reg}</h3>
-                                <hr style="margin:5px 0; border:0; border-top:1px solid #eee;">
-                                <p style="margin:2px 0; font-size:13px;"><b>Actividades:</b> ${nAct}</p>
-                                <p style="margin:2px 0; font-size:13px;"><b>Participantes:</b> ${(nEst+nDoc+nInv).toLocaleString()}</p>
-                                <ul style="margin:0; padding-left:15px; font-size:11px; color:#666;">
-                                    <li>Estudiantes: ${nEst.toLocaleString()}</li>
-                                    <li>Docentes: ${nDoc.toLocaleString()}</li>
-                                    <li>Investigadores: ${nInv.toLocaleString()}</li>
-                                </ul>
-                                <p style="margin:2px 0; font-size:13px;"><b>Asistentes:</b> ${nAsist.toLocaleString()}</p>
+                                <h3>${reg}</h3><hr>
+                                <b>Actividades:</b> ${nAct}<br>
+                                <b>Participantes:</b> ${(nEst+nDoc+nInv).toLocaleString()}<br>
+                                <small>• Estudiantes: ${nEst.toLocaleString()}</small><br>
+                                <small>• Docentes: ${nDoc.toLocaleString()}</small><br>
+                                <small>• Investigadores: ${nInv.toLocaleString()}</small><br>
+                                <b>Asistentes:</b> ${nAsist.toLocaleString()}
                             </div>
-                        `;
-                        
-                        l.setPopupContent(content);
-                        l.openPopup();
+                        `).openPopup();
                     });
                 }
             }).addTo(map);
         });
+}
+
+function estiloMapaDinamico(feature) {
+    const region = feature.properties.NOMBDEP.toUpperCase();
+    const filtrados = obtenerDatosFiltrados();
+    const valorRegion = filtrados.filter(e => e.region === region)
+                                 .reduce((acc, curr) => acc + calcularValorPorMetrica(curr, metricaActual), 0);
+    const resumen = {};
+    filtrados.forEach(e => resumen[e.region] = (resumen[e.region] || 0) + calcularValorPorMetrica(e, metricaActual));
+    const maxVal = Math.max(...Object.values(resumen), 1);
+    const ratio = valorRegion / maxVal;
+    return {
+        fillColor: valorRegion > 0 ? '#00A3E0' : 'transparent',
+        fillOpacity: valorRegion > 0 ? (ratio * 0.75 + 0.15) : 0,
+        weight: 1, color: '#fff'
+    };
 }
 
 function actualizarVisualizacion() {
@@ -169,39 +139,58 @@ function actualizarVisualizacion() {
     const minAnio = Math.min(...listaAnios);
     const maxAnio = Math.max(...listaAnios);
     document.getElementById("kpiAnios").innerHTML = `<span>Periodo</span><strong>${minAnio === Infinity ? '-' : minAnio + ' - ' + maxAnio}</strong>`;
-
-    // KPI Cobertura y Actividades
     document.getElementById("kpiCobertura").innerHTML = `<span>Cobertura</span><strong>${new Set(filtrados.map(e=>e.region)).size} Regiones</strong>`;
-    document.getElementById("kpiTotal").innerHTML = `<span>Actividades</span><strong>${filtrados.length}</strong>`;
 
-    // KPI Participantes Disgregado
-    const est = filtrados.reduce((a,b)=>a+b.estudiantes, 0);
-    const doc = filtrados.reduce((a,b)=>a+b.docentes, 0);
-    const inv = filtrados.reduce((a,b)=>a+b.investigadores, 0);
-    let htmlPart = `<span>Participantes</span><strong>${(est+doc+inv).toLocaleString()}</strong>`;
+    // KPI Actividades con Top 3
+    const conteoTipos = filtrados.reduce((acc, e) => { acc[e.tipo] = (acc[e.tipo] || 0) + 1; return acc; }, {});
+    const tiposSorted = Object.entries(conteoTipos).sort((a,b) => b[1]-a[1]);
+    const top3 = tiposSorted.slice(0, 3);
+    const otrosSum = tiposSorted.slice(3).reduce((s, c) => s + c[1], 0);
+    let htmlAct = `<span>Actividades</span><strong>${filtrados.length}</strong>`;
+    let detailAct = top3.map(t => `${t[1]} ${t[0].substring(0,10)}...`);
+    if(otrosSum > 0) detailAct.push(`${otrosSum} Otros`);
+    htmlAct += `<small>${detailAct.join(' | ')}</small>`;
+    document.getElementById("kpiTotal").innerHTML = htmlAct;
+
+    // KPI Participantes
+    const estTotal = filtrados.reduce((a,b)=>a+b.estudiantes, 0);
+    const docTotal = filtrados.reduce((a,b)=>a+b.docentes, 0);
+    const invTotal = filtrados.reduce((a,b)=>a+b.investigadores, 0);
+    let htmlPart = `<span>Participantes</span><strong>${(estTotal+docTotal+invTotal).toLocaleString()}</strong>`;
     let detailPart = [];
-    if(est > 0) detailPart.push(`${est.toLocaleString()} Est.`);
-    if(doc > 0) detailPart.push(`${doc.toLocaleString()} Doc.`);
-    if(inv > 0) detailPart.push(`${inv.toLocaleString()} Inv.`);
-    if(detailPart.length > 0) htmlPart += `<small>${detailPart.join(' | ')}</small>`;
-    document.getElementById("kpiParticipantes").innerHTML = htmlPart;
+    if(estTotal > 0) detailPart.push(`${estTotal.toLocaleString()} Alum.`);
+    if(docTotal > 0) detailPart.push(`${docTotal.toLocaleString()} Doc.`);
+    if(invTotal > 0) detailPart.push(`${invTotal.toLocaleString()} Inv.`);
+    document.getElementById("kpiParticipantes").innerHTML = htmlPart + `<small>${detailPart.join(' | ')}</small>`;
 
-    // KPI Asistentes Disgregado
+    // KPI Asistentes
     const pres = filtrados.reduce((a,b)=>a+b.presenciales, 0);
     const virt = filtrados.reduce((a,b)=>a+b.virtuales, 0);
     let htmlAsist = `<span>Asistentes</span><strong>${(pres+virt).toLocaleString()}</strong>`;
     let detailAsist = [];
-    if(pres > 0) detailAsist.push(`${pres.toLocaleString()} Presen.`);
+    if(pres > 0) detailAsist.push(`${pres.toLocaleString()} Pres.`);
     if(virt > 0) detailAsist.push(`${virt.toLocaleString()} Virt.`);
-    if(detailAsist.length > 0) htmlAsist += `<small>${detailAsist.join(' | ')}</small>`;
-    document.getElementById("kpiAsistentes").innerHTML = htmlAsist;
+    document.getElementById("kpiAsistentes").innerHTML = htmlAsist + `<small>${detailAsist.join(' | ')}</small>`;
 
-    // Lista
-    document.getElementById("listaEventos").innerHTML = filtrados.map(e => `
-        <div class="evento-item">
-            <h4>${e.nombre}</h4>
-            <p>${e.region} | ${e.anio}</p>
-        </div>`).join('');
+    // Lista de actividades enriquecida
+    document.getElementById("listaEventos").innerHTML = filtrados.map(e => {
+        let p = [];
+        if(e.estudiantes>0) p.push(`${e.estudiantes} estudiantes`);
+        if(e.docentes>0) p.push(`${e.docentes} docentes`);
+        if(e.investigadores>0) p.push(`${e.investigadores} investigadores`);
+        let a = [];
+        if(e.presenciales>0) a.push(`${e.presenciales} presencial`);
+        if(e.virtuales>0) a.push(`${e.virtuales} virtual`);
+        return `
+            <div class="evento-item">
+                <h4>${e.nombre} (${e.mes} ${e.anio})</h4>
+                <p><strong>Organizado por:</strong> ${e.institucion}</p>
+                <p class="detalles-lista">
+                    ${p.length>0 ? 'Con la participación de '+p.join(', ')+'.' : ''}
+                    ${a.length>0 ? ' Asistencia: '+a.join(' y ')+'.' : ''}
+                </p>
+            </div>`;
+    }).join('');
 
     actualizarGraficas(filtrados);
 }
@@ -209,55 +198,55 @@ function actualizarVisualizacion() {
 function actualizarGraficas(datos) {
     if(graficoRegion) graficoRegion.destroy();
     if(graficoAnio) graficoAnio.destroy();
-
     const label = document.getElementById("selectorMetricaMapa").selectedOptions[0].text;
-    document.getElementById("tituloGraficoRegion").innerText = label + " por Región";
-    document.getElementById("tituloGraficoAnio").innerText = label + " por Año";
-
     const rReg = {}, rAnio = {};
     datos.forEach(e => {
         const v = calcularValorPorMetrica(e, metricaActual);
         rReg[e.region] = (rReg[e.region] || 0) + v;
         rAnio[e.anio] = (rAnio[e.anio] || 0) + v;
     });
-
     const regs = Object.keys(rReg).sort((a,b)=>rReg[b]-rReg[a]).slice(0, 10);
     graficoRegion = new Chart(document.getElementById("graficoRegiones"), {
         type: 'bar',
         data: { labels: regs, datasets: [{ data: regs.map(r=>rReg[r]), backgroundColor: '#00A3E0' }] },
         options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: false } }
     });
-
     const anios = Object.keys(rAnio).sort();
     graficoAnio = new Chart(document.getElementById("graficoAnio"), {
         type: 'line',
-        data: { labels: anios, datasets: [{ data: anios.map(a=>rAnio[a]), borderColor: '#00A3E0', fill: true, tension: 0.4, backgroundColor: 'rgba(0,163,224,0.1)' }] },
+        data: { labels: anios, datasets: [{ data: anios.map(a=>rAnio[a]), borderColor: '#00A3E0', fill: true, tension: 0.4 }] },
         options: { responsive: true, maintainAspectRatio: false, plugins: { legend: false } }
     });
 }
 
-function configurarEventos() {
-    const inputs = document.querySelectorAll(".filter-panel select");
-    inputs.forEach(i => i.addEventListener("change", () => {
-        actualizarFiltrosCascada();
-        actualizarVisualizacion();
-    }));
-    
-    document.getElementById("buscadorTexto").addEventListener("input", actualizarVisualizacion);
-    
-    document.getElementById("selectorMetricaMapa").addEventListener("change", (e) => {
-        metricaActual = e.target.value;
-        actualizarVisualizacion();
-    });
+function aplicarTema(tema) {
+    if (tema === 'system') {
+        const dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+    } else {
+        document.documentElement.setAttribute('data-theme', tema);
+    }
+}
 
+function configurarEventos() {
+    document.querySelectorAll(".filter-panel select").forEach(s => s.addEventListener("change", () => { 
+        actualizarFiltrosCascada(); actualizarVisualizacion(); 
+    }));
+    document.getElementById("buscadorTexto").addEventListener("input", actualizarVisualizacion);
+    document.getElementById("selectorMetricaMapa").addEventListener("change", (e) => { 
+        metricaActual = e.target.value; actualizarVisualizacion(); 
+    });
     document.getElementById("btnLimpiar").addEventListener("click", () => {
         document.querySelectorAll(".filter-panel select").forEach(s => s.value = "");
         document.getElementById("buscadorTexto").value = "";
-        actualizarFiltrosCascada();
-        actualizarVisualizacion();
+        actualizarFiltrosCascada(); actualizarVisualizacion();
     });
-
-    document.getElementById("btnExportar").addEventListener("click", exportarCSV);
+    document.getElementById("themeSelector").addEventListener("change", (e) => {
+        aplicarTema(e.target.value); localStorage.setItem('theme', e.target.value);
+    });
+    const savedTheme = localStorage.getItem('theme') || 'system';
+    document.getElementById("themeSelector").value = savedTheme;
+    aplicarTema(savedTheme);
     actualizarFiltrosCascada();
 }
 
@@ -266,39 +255,11 @@ function actualizarFiltrosCascada() {
     const config = [["filtroObjetivo","objetivo"], ["filtroPrograma","programa"], ["filtroProyecto","proyecto"], ["filtroActividad","nombre"], ["filtroAnio","anio"], ["filtroRegion","region"], ["filtroInstitucion","institucion"], ["filtroAlcance","alcance"]];
     config.forEach(([id, campo]) => {
         const el = document.getElementById(id);
-        const actualVal = el.value;
-        if (!actualVal) {
+        if (!el.value) {
             const opts = [...new Set(filtrados.map(e => e[campo]))].filter(Boolean).sort();
             el.innerHTML = '<option value="">Todos</option>' + opts.map(o => `<option value="${o}">${o}</option>`).join('');
         }
     });
-}
-
-function exportarCSV() {
-    const datos = obtenerDatosFiltrados();
-    if (!datos.length) {
-        alert("No hay datos para exportar.");
-        return;
-    }
-
-    const headers = ["Nombre", "Programa", "Proyecto", "Objetivo", "Tipo", "Modalidad", "Mes", "Año", "Localidad", "Region", "Institucion", "Alcance", "Investigadores", "Docentes", "Estudiantes", "Presenciales", "Virtuales"];
-    
-    const rows = datos.map(d => [
-        `"${d.nombre}"`, `"${d.programa}"`, `"${d.proyecto}"`, `"${d.objetivo}"`,
-        `"${d.tipo}"`, `"${d.modalidad}"`, `"${d.mes}"`, `"${d.anio}"`,
-        `"${d.localidad}"`, `"${d.region}"`, `"${d.institucion}"`, `"${d.alcance}"`,
-        d.investigadores, d.docentes, d.estudiantes, d.presenciales, d.virtuales
-    ].join(","));
-
-    const csvContent = "\uFEFF" + headers.join(",") + "\n" + rows.join("\n");
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.setAttribute("href", url);
-    link.setAttribute("download", "popularizacion_ciencia_concytec.csv");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
 }
 
 cargarDatos();
