@@ -6,7 +6,6 @@ let map, geoLayer, tileLayer;
 let graficoRegion, graficoAnio;
 let metricaActual = 'actividades';
 
-// URLs de capas para modo claro y oscuro
 const TILE_LIGHT = 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
 const TILE_DARK = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
 
@@ -41,28 +40,6 @@ async function cargarDatos() {
     } catch (e) { console.error("Error:", e); }
 }
 
-function calcularValorPorMetrica(evento, metrica) {
-    if (metrica === 'actividades') return 1;
-    if (metrica === 'participantes') return evento.investigadores + evento.docentes + evento.estudiantes;
-    return evento[metrica] || 0;
-}
-
-function obtenerDatosFiltrados() {
-    const v = (id) => document.getElementById(id).value;
-    const busqueda = document.getElementById("buscadorTexto").value.toLowerCase();
-    return eventosGlobal.filter(e => {
-        const coinc = !busqueda || e.nombre.toLowerCase().includes(busqueda) || e.programa.toLowerCase().includes(busqueda) || e.region.toLowerCase().includes(busqueda);
-        return coinc && (!v("filtroObjetivo") || e.objetivo === v("filtroObjetivo")) &&
-            (!v("filtroPrograma") || e.programa === v("filtroPrograma")) &&
-            (!v("filtroProyecto") || e.proyecto === v("filtroProyecto")) &&
-            (!v("filtroActividad") || e.nombre === v("filtroActividad")) &&
-            (!v("filtroAnio") || e.anio === v("filtroAnio")) &&
-            (!v("filtroRegion") || e.region === v("filtroRegion")) &&
-            (!v("filtroInstitucion") || e.institucion === v("filtroInstitucion")) &&
-            (!v("filtroAlcance") || e.alcance === v("filtroAlcance"));
-    });
-}
-
 function inicializarMapa() {
     if (map) map.remove();
     map = L.map('map', {
@@ -70,7 +47,6 @@ function inicializarMapa() {
         touchZoom: false, boxZoom: false, keyboard: false, zoomSnap: 0.1, minZoom: 5.5, maxZoom: 5.5, tap: true
     }).setView([-9.19, -75.015], 5.5);
 
-    // Seleccionar capa inicial según tema actual
     const currentTheme = document.documentElement.getAttribute('data-theme');
     tileLayer = L.tileLayer(currentTheme === 'dark' ? TILE_DARK : TILE_LIGHT).addTo(map);
 
@@ -94,17 +70,6 @@ function inicializarMapa() {
     });
 }
 
-function estiloMapaDinamico(feature) {
-    const region = feature.properties.NOMBDEP.toUpperCase();
-    const filtrados = obtenerDatosFiltrados();
-    const valorRegion = filtrados.filter(e => e.region === region).reduce((acc, curr) => acc + calcularValorPorMetrica(curr, metricaActual), 0);
-    const resumen = {};
-    filtrados.forEach(e => resumen[e.region] = (resumen[e.region] || 0) + calcularValorPorMetrica(e, metricaActual));
-    const maxVal = Math.max(...Object.values(resumen), 1);
-    const ratio = valorRegion / maxVal;
-    return { fillColor: valorRegion > 0 ? '#00A3E0' : 'transparent', fillOpacity: valorRegion > 0 ? (ratio * 0.75 + 0.15) : 0, weight: 1, color: '#fff' };
-}
-
 function actualizarVisualizacion() {
     const filtrados = obtenerDatosFiltrados();
     if (geoLayer) geoLayer.setStyle(estiloMapaDinamico);
@@ -114,10 +79,10 @@ function actualizarVisualizacion() {
     document.getElementById("kpiCobertura").innerHTML = `<span>Cobertura</span><strong>${new Set(filtrados.map(e=>e.region)).size} Regiones</strong>`;
 
     const tipos = filtrados.reduce((acc, e) => { acc[e.tipo] = (acc[e.tipo] || 0) + 1; return acc; }, {});
-    const top3 = Object.entries(tipos).sort((a,b)=>b[1]-a[1]).slice(0,3);
-    const otros = Object.entries(tipos).sort((a,b)=>b[1]-a[1]).slice(3).reduce((s,c)=>s+c[1],0);
-    let htmlAct = `<span>Actividades</span><strong>${filtrados.length}</strong><small>${top3.map(t=>`${t[1]} ${t[0].substring(0,8)}`).join(' | ')}${otros>0?' | Otros':''}</small>`;
-    document.getElementById("kpiTotal").innerHTML = htmlAct;
+    const sorted = Object.entries(tipos).sort((a,b)=>b[1]-a[1]);
+    const top3 = sorted.slice(0,3);
+    const otros = sorted.slice(3).reduce((s,c)=>s+c[1],0);
+    document.getElementById("kpiTotal").innerHTML = `<span>Actividades</span><strong>${filtrados.length}</strong><small>${top3.map(t=>`${t[1]} ${t[0].substring(0,8)}`).join(' | ')}${otros>0?' | Otros':''}</small>`;
 
     const est = filtrados.reduce((a,b)=>a+b.estudiantes,0), doc = filtrados.reduce((a,b)=>a+b.docentes,0), inv = filtrados.reduce((a,b)=>a+b.investigadores,0);
     document.getElementById("kpiParticipantes").innerHTML = `<span>Participantes</span><strong>${(est+doc+inv).toLocaleString()}</strong><small>${est>0?est+' Alum.':''} ${doc>0?'| '+doc+' Doc.':''} ${inv>0?'| '+inv+' Inv.':''}</small>`;
@@ -125,48 +90,51 @@ function actualizarVisualizacion() {
     const pres = filtrados.reduce((a,b)=>a+b.presenciales,0), virt = filtrados.reduce((a,b)=>a+b.virtuales,0);
     document.getElementById("kpiAsistentes").innerHTML = `<span>Asistentes</span><strong>${(pres+virt).toLocaleString()}</strong><small>${pres>0?pres+' Pres.':''} ${virt>0?'| '+virt+' Virt.':''}</small>`;
 
-    document.getElementById("listaEventos").innerHTML = filtrados.map(e => `
-        <div class="evento-item">
-            <h4>${e.nombre} (${e.mes} ${e.anio})</h4>
-            <p><strong>Organizado por:</strong> ${e.institucion}</p>
-            <p class="detalles-lista">${e.estudiantes>0?e.estudiantes+' est. ':''}${e.docentes>0?e.docentes+' doc. ':''}${e.presenciales>0?'Asist: '+e.presenciales+' pres. ':''}${e.virtuales>0?' '+e.virtuales+' virt.':''}</p>
-        </div>`).join('');
+    document.getElementById("listaEventos").innerHTML = filtrados.map(e => {
+        let p = []; if(e.estudiantes>0) p.push(e.estudiantes+' est.'); if(e.docentes>0) p.push(e.docentes+' doc.'); if(e.investigadores>0) p.push(e.investigadores+' inv.');
+        let a = []; if(e.presenciales>0) a.push(e.presenciales+' pres.'); if(e.virtuales>0) a.push(e.virtuales+' virt.');
+        return `<div class="evento-item"><h4>${e.nombre} (${e.mes} ${e.anio})</h4><p><strong>Org:</strong> ${e.institucion}</p><p class="detalles-lista">${p.length?'Part: '+p.join(', '):''} ${a.length?'Asist: '+a.join(', '):''}</p></div>`;
+    }).join('');
     actualizarGraficas(filtrados);
 }
 
-function actualizarGraficas(datos) {
-    if(graficoRegion) graficoRegion.destroy();
-    if(graficoAnio) graficoAnio.destroy();
-    const label = document.getElementById("selectorMetricaMapa").selectedOptions[0].text;
-    const rReg = {}, rAnio = {};
-    datos.forEach(e => { const v = calcularValorPorMetrica(e, metricaActual); rReg[e.region] = (rReg[e.region] || 0) + v; rAnio[e.anio] = (rAnio[e.anio] || 0) + v; });
-    const config = (ctx, labels, data, type) => new Chart(ctx, { type, data: { labels, datasets: [{ data, backgroundColor: '#00A3E0', borderColor: '#00A3E0', fill: type==='line' }] }, options: { indexAxis: type==='bar'?'y':'x', responsive: true, maintainAspectRatio: false, plugins: { legend: false } } });
-    const regs = Object.keys(rReg).sort((a,b)=>rReg[b]-rReg[a]).slice(0, 10);
-    graficoRegion = config(document.getElementById("graficoRegiones"), regs, regs.map(r=>rReg[r]), 'bar');
-    const anios = Object.keys(rAnio).sort();
-    graficoAnio = config(document.getElementById("graficoAnio"), anios, anios.map(a=>rAnio[a]), 'line');
-}
-
 function configurarEventos() {
-    const btnTheme = document.getElementById("themeToggle");
-    btnTheme.addEventListener("click", () => {
+    document.getElementById("themeToggle").addEventListener("click", () => {
         const current = document.documentElement.getAttribute('data-theme');
         const next = current === 'dark' ? 'light' : 'dark';
         document.documentElement.setAttribute('data-theme', next);
         localStorage.setItem('theme', next);
-        // Cambiar capa del mapa sin recargar todo
         map.removeLayer(tileLayer);
         tileLayer = L.tileLayer(next === 'dark' ? TILE_DARK : TILE_LIGHT).addTo(map);
     });
 
-    document.querySelectorAll(".filter-panel select, #buscadorTexto").forEach(el => el.addEventListener("input", () => { 
+    document.querySelectorAll(".filter-panel select, #buscadorTexto").forEach(el => el.addEventListener("input", () => {
         if(el.tagName === 'SELECT') actualizarFiltrosCascada();
-        actualizarVisualizacion(); 
+        actualizarVisualizacion();
     }));
     document.getElementById("selectorMetricaMapa").addEventListener("change", (e) => { metricaActual = e.target.value; actualizarVisualizacion(); });
     document.getElementById("btnLimpiar").addEventListener("click", () => {
         document.querySelectorAll(".filter-panel select, #buscadorTexto").forEach(el => el.value = "");
         actualizarFiltrosCascada(); actualizarVisualizacion();
+    });
+}
+
+function estiloMapaDinamico(feature) {
+    const region = feature.properties.NOMBDEP.toUpperCase();
+    const filtrados = obtenerDatosFiltrados();
+    const valReg = filtrados.filter(e => e.region === region).reduce((acc, curr) => acc + (metricaActual==='actividades'?1:(metricaActual==='participantes'?curr.estudiantes+curr.docentes+curr.investigadores:curr[metricaActual]||0)), 0);
+    const resumen = {};
+    filtrados.forEach(e => { const v = (metricaActual==='actividades'?1:(metricaActual==='participantes'?e.estudiantes+e.docentes+e.investigadores:e[metricaActual]||0)); resumen[e.region] = (resumen[e.region]||0)+v; });
+    const maxVal = Math.max(...Object.values(resumen), 1);
+    return { fillColor: valReg > 0 ? '#00A3E0' : 'transparent', fillOpacity: valReg > 0 ? (valReg/maxVal * 0.75 + 0.15) : 0, weight: 1, color: '#fff' };
+}
+
+function obtenerDatosFiltrados() {
+    const v = (id) => document.getElementById(id).value;
+    const busq = document.getElementById("buscadorTexto").value.toLowerCase();
+    return eventosGlobal.filter(e => {
+        const coinc = !busq || e.nombre.toLowerCase().includes(busq) || e.programa.toLowerCase().includes(busq) || e.region.toLowerCase().includes(busq);
+        return coinc && (!v("filtroObjetivo") || e.objetivo === v("filtroObjetivo")) && (!v("filtroPrograma") || e.programa === v("filtroPrograma")) && (!v("filtroProyecto") || e.proyecto === v("filtroProyecto")) && (!v("filtroActividad") || e.nombre === v("filtroActividad")) && (!v("filtroAnio") || e.anio === v("filtroAnio")) && (!v("filtroRegion") || e.region === v("filtroRegion")) && (!v("filtroInstitucion") || e.institucion === v("filtroInstitucion")) && (!v("filtroAlcance") || e.alcance === v("filtroAlcance"));
     });
 }
 
@@ -182,8 +150,16 @@ function actualizarFiltrosCascada() {
     });
 }
 
-// Carga de tema inicial
+function actualizarGraficas(datos) {
+    if(graficoRegion) graficoRegion.destroy(); if(graficoAnio) graficoAnio.destroy();
+    const rReg = {}, rAnio = {};
+    datos.forEach(e => { const v = (metricaActual==='actividades'?1:(metricaActual==='participantes'?e.estudiantes+e.docentes+e.investigadores:e[metricaActual]||0)); rReg[e.region] = (rReg[e.region] || 0) + v; rAnio[e.anio] = (rAnio[e.anio] || 0) + v; });
+    const config = (ctx, labels, data, type) => new Chart(ctx, { type, data: { labels, datasets: [{ data, backgroundColor: '#00A3E0', borderColor: '#00A3E0', fill: type==='line' }] }, options: { indexAxis: type==='bar'?'y':'x', responsive: true, maintainAspectRatio: false, plugins: { legend: false } } });
+    const regs = Object.keys(rReg).sort((a,b)=>rReg[b]-rReg[a]).slice(0, 10);
+    graficoRegion = config(document.getElementById("graficoRegiones"), regs, regs.map(r=>rReg[r]), 'bar');
+    const anios = Object.keys(rAnio).sort(); graficoAnio = config(document.getElementById("graficoAnio"), anios, anios.map(a=>rAnio[a]), 'line');
+}
+
 const savedTheme = localStorage.getItem('theme') || 'light';
 document.documentElement.setAttribute('data-theme', savedTheme);
-
 cargarDatos();
