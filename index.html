@@ -15,6 +15,14 @@
         <div class="header-content">
             <h1>Observatorio Nacional Actividades de Popularización de la Ciencia</h1>
             <p>Consejo Nacional de Ciencia, Tecnología e Innovación - CONCYTEC</p>
+            <div class="theme-switch-wrapper">
+                <label for="themeSelector">Tema: </label>
+                <select id="themeSelector">
+                    <option value="light">Modo Claro</option>
+                    <option value="dark">Modo Oscuro</option>
+                    <option value="system">Sistema</option>
+                </select>
+            </div>
         </div>
     </header>
 
@@ -51,7 +59,6 @@
         <aside class="side-panel">
             <div class="panel-header">
                 <span>Lista de actividades</span>
-                <button id="btnExportar" class="btn-download">📥 CSV</button>
             </div>
             <div id="listaEventos"></div>
         </aside>
