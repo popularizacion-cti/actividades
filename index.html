@@ -4,7 +4,6 @@
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Observatorio POP CTI - CONCYTEC</title>
-    
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <link rel="stylesheet" href="style.css"/>
@@ -13,15 +12,16 @@
 
     <header>
         <div class="header-content">
-            <h1>Observatorio Nacional Actividades de Popularización de la Ciencia</h1>
-            <p>Consejo Nacional de Ciencia, Tecnología e Innovación - CONCYTEC</p>
-            <div class="theme-switch-wrapper">
-                <label for="themeSelector">Tema: </label>
-                <select id="themeSelector">
-                    <option value="light">Modo Claro</option>
-                    <option value="dark">Modo Oscuro</option>
-                    <option value="system">Sistema</option>
-                </select>
+            <div class="header-titles">
+                <h1>Observatorio Nacional Actividades de Popularización de la Ciencia</h1>
+                <p>Consejo Nacional de Ciencia, Tecnología e Innovación - CONCYTEC</p>
+            </div>
+            <div class="theme-toggle-container">
+                <button id="themeToggle" class="theme-switch" title="Cambiar Tema">
+                    <span class="icon-sun">☀️</span>
+                    <span class="icon-moon">🌙</span>
+                    <div class="switch-handle"></div>
+                </button>
             </div>
         </div>
     </header>
@@ -42,14 +42,14 @@
             <div class="filter-group"><label>Alcance</label><select id="filtroAlcance"></select></div>
             <div class="filter-group action-group">
                 <label>&nbsp;</label>
-                <button id="btnLimpiar" class="btn-clear">Limpiar Filtros</button>
+                <button id="btnLimpiar" class="btn-clear">Limpiar</button>
             </div>
         </div>
     </section>
 
     <section class="indicadores">
-        <div class="kpi-card" id="kpiAnios"></div>
-        <div class="kpi-card" id="kpiCobertura"></div>
+        <div class="kpi-card kpi-small" id="kpiAnios"></div>
+        <div class="kpi-card kpi-small" id="kpiCobertura"></div>
         <div class="kpi-card" id="kpiTotal"></div>
         <div class="kpi-card" id="kpiParticipantes"></div>
         <div class="kpi-card" id="kpiAsistentes"></div>
@@ -57,9 +57,7 @@
 
     <div class="main-layout">
         <aside class="side-panel">
-            <div class="panel-header">
-                <span>Lista de actividades</span>
-            </div>
+            <div class="panel-header">Lista de actividades</div>
             <div id="listaEventos"></div>
         </aside>
 
@@ -68,12 +66,12 @@
                 <div class="map-controls">
                     <label>Métrica:</label>
                     <select id="selectorMetricaMapa">
-                        <option value="actividades">Actividades</option>
-                        <option value="participantes">Participantes</option>
-                        <option value="asistentes">Asistentes</option>
+                        <option value="actividades">Número de Actividades</option>
+                        <option value="participantes">Total Participantes</option>
+                        <option value="asistentes">Público Asistente</option>
                         <option value="estudiantes">Estudiantes</option>
                         <option value="docentes">Docentes</option>
-                        <option value="investigadores">Investigadores</option>
+                        <option value="investigadores">Investigadores/as</option>
                     </select>
                 </div>
                 <div id="map"></div>
