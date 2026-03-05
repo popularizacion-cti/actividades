@@ -20,7 +20,7 @@ async function cargarDatos() {
             tipo: r.c[4]?.v || "",
             modalidad: r.c[5]?.v || "",
             mes: r.c[6]?.v || "",
-            anio: String(r.c[7]?.v || ""),
+            anio: r.c[7]?.v ? String(r.c[7].v) : "",
             localidad: r.c[8]?.v || "",
             region: String(r.c[9]?.v || "").toUpperCase().trim(),
             institucion: r.c[10]?.v || "",
@@ -28,7 +28,9 @@ async function cargarDatos() {
             investigadores: (Number(r.c[13]?.v) || 0) + (Number(r.c[14]?.v) || 0),
             docentes: Number(r.c[15]?.v) || 0,
             estudiantes: (Number(r.c[16]?.v) || 0) + (Number(r.c[17]?.v) || 0),
-            asistentes: (Number(r.c[18]?.v) || 0) + (Number(r.c[19]?.v) || 0),
+            presenciales: Number(r.c[18]?.v) || 0,
+            virtuales: Number(r.c[19]?.v) || 0,
+            asistentes: (Number(r.c[18]?.v) || 0) + (Number(r.c[19]?.v) || 0)
         }));
 
         inicializarMapa();
@@ -50,7 +52,6 @@ function obtenerDatosFiltrados() {
     const busqueda = document.getElementById("buscadorTexto").value.toLowerCase();
 
     return eventosGlobal.filter(e => {
-        // Buscador expandido: nombre, programa, proyecto y region
         const coincideBusqueda = !busqueda || 
             e.nombre.toLowerCase().includes(busqueda) || 
             e.programa.toLowerCase().includes(busqueda) ||
@@ -73,25 +74,18 @@ function obtenerDatosFiltrados() {
 function estiloMapaDinamico(feature) {
     const region = feature.properties.NOMBDEP.toUpperCase();
     const filtrados = obtenerDatosFiltrados();
-    
-    // Suma de la métrica en la región
-    const valorRegion = filtrados
-        .filter(e => e.region === region)
-        .reduce((acc, curr) => acc + calcularValorPorMetrica(curr, metricaActual), 0);
+    const valorRegion = filtrados.filter(e => e.region === region)
+                                 .reduce((acc, curr) => acc + calcularValorPorMetrica(curr, metricaActual), 0);
 
-    // Valor máximo actual para la escala
     const resumen = {};
-    filtrados.forEach(e => {
-        resumen[e.region] = (resumen[e.region] || 0) + calcularValorPorMetrica(e, metricaActual);
-    });
+    filtrados.forEach(e => resumen[e.region] = (resumen[e.region] || 0) + calcularValorPorMetrica(e, metricaActual));
     const maxVal = Math.max(...Object.values(resumen), 1);
     const ratio = valorRegion / maxVal;
 
     return {
         fillColor: valorRegion > 0 ? '#00A3E0' : 'transparent',
         fillOpacity: valorRegion > 0 ? (ratio * 0.75 + 0.15) : 0,
-        weight: 1,
-        color: '#fff'
+        weight: 1, color: '#fff'
     };
 }
 
@@ -122,7 +116,7 @@ function inicializarMapa() {
                                 <small>• Estudiantes: ${nEst.toLocaleString()}</small><br>
                                 <small>• Docentes: ${nDoc.toLocaleString()}</small><br>
                                 <small>• Investigadores: ${nInv.toLocaleString()}</small><br>
-                                <b>Público Asistente:</b> ${nAsist.toLocaleString()}
+                                <b>Asistentes:</b> ${nAsist.toLocaleString()}
                             </div>
                         `).openPopup();
                     });
@@ -135,14 +129,39 @@ function actualizarVisualizacion() {
     const filtrados = obtenerDatosFiltrados();
     if (geoLayer) geoLayer.setStyle(estiloMapaDinamico);
 
-    const p = filtrados.reduce((a,b)=>a+b.investigadores+b.docentes+b.estudiantes, 0);
-    const as = filtrados.reduce((a,b)=>a+b.asistentes, 0);
+    // KPI Años
+    const listaAnios = filtrados.map(e => parseInt(e.anio)).filter(n => !isNaN(n));
+    const minAnio = Math.min(...listaAnios);
+    const maxAnio = Math.max(...listaAnios);
+    document.getElementById("kpiAnios").innerHTML = `<span>Periodo</span><strong>${minAnio === Infinity ? '-' : minAnio + ' - ' + maxAnio}</strong>`;
 
+    // KPI Cobertura y Actividades
     document.getElementById("kpiCobertura").innerHTML = `<span>Cobertura</span><strong>${new Set(filtrados.map(e=>e.region)).size} Regiones</strong>`;
     document.getElementById("kpiTotal").innerHTML = `<span>Actividades</span><strong>${filtrados.length}</strong>`;
-    document.getElementById("kpiParticipantes").innerHTML = `<span>Participantes</span><strong>${p.toLocaleString()}</strong>`;
-    document.getElementById("kpiAsistentes").innerHTML = `<span>Asistentes</span><strong>${as.toLocaleString()}</strong>`;
 
+    // KPI Participantes Disgregado
+    const est = filtrados.reduce((a,b)=>a+b.estudiantes, 0);
+    const doc = filtrados.reduce((a,b)=>a+b.docentes, 0);
+    const inv = filtrados.reduce((a,b)=>a+b.investigadores, 0);
+    let htmlPart = `<span>Participantes</span><strong>${(est+doc+inv).toLocaleString()}</strong>`;
+    let detailPart = [];
+    if(est > 0) detailPart.push(`${est.toLocaleString()} Alum.`);
+    if(doc > 0) detailPart.push(`${doc.toLocaleString()} Doc.`);
+    if(inv > 0) detailPart.push(`${inv.toLocaleString()} Inv.`);
+    if(detailPart.length > 0) htmlPart += `<small>${detailPart.join(' | ')}</small>`;
+    document.getElementById("kpiParticipantes").innerHTML = htmlPart;
+
+    // KPI Asistentes Disgregado
+    const pres = filtrados.reduce((a,b)=>a+b.presenciales, 0);
+    const virt = filtrados.reduce((a,b)=>a+b.virtuales, 0);
+    let htmlAsist = `<span>Asistentes</span><strong>${(pres+virt).toLocaleString()}</strong>`;
+    let detailAsist = [];
+    if(pres > 0) detailAsist.push(`${pres.toLocaleString()} Pres.`);
+    if(virt > 0) detailAsist.push(`${virt.toLocaleString()} Virt.`);
+    if(detailAsist.length > 0) htmlAsist += `<small>${detailAsist.join(' | ')}</small>`;
+    document.getElementById("kpiAsistentes").innerHTML = htmlAsist;
+
+    // Lista
     document.getElementById("listaEventos").innerHTML = filtrados.map(e => `
         <div class="evento-item">
             <h4>${e.nombre}</h4>
@@ -167,7 +186,7 @@ function actualizarGraficas(datos) {
         rAnio[e.anio] = (rAnio[e.anio] || 0) + v;
     });
 
-    const regs = Object.keys(rReg).sort((a,b)=>rReg[b]-rReg[a]).slice(0, 8);
+    const regs = Object.keys(rReg).sort((a,b)=>rReg[b]-rReg[a]).slice(0, 10);
     graficoRegion = new Chart(document.getElementById("graficoRegiones"), {
         type: 'bar',
         data: { labels: regs, datasets: [{ data: regs.map(r=>rReg[r]), backgroundColor: '#00A3E0' }] },
@@ -183,16 +202,26 @@ function actualizarGraficas(datos) {
 }
 
 function configurarEventos() {
-    const inputs = document.querySelectorAll(".filter-panel select, #buscadorTexto");
+    const inputs = document.querySelectorAll(".filter-panel select");
     inputs.forEach(i => i.addEventListener("change", () => {
-        if(i.tagName === 'SELECT') actualizarFiltrosCascada();
+        actualizarFiltrosCascada();
         actualizarVisualizacion();
     }));
+    
     document.getElementById("buscadorTexto").addEventListener("input", actualizarVisualizacion);
+    
     document.getElementById("selectorMetricaMapa").addEventListener("change", (e) => {
         metricaActual = e.target.value;
         actualizarVisualizacion();
     });
+
+    document.getElementById("btnLimpiar").addEventListener("click", () => {
+        document.querySelectorAll(".filter-panel select").forEach(s => s.value = "");
+        document.getElementById("buscadorTexto").value = "";
+        actualizarFiltrosCascada();
+        actualizarVisualizacion();
+    });
+
     document.getElementById("btnExportar").addEventListener("click", exportarCSV);
     actualizarFiltrosCascada();
 }
@@ -202,7 +231,8 @@ function actualizarFiltrosCascada() {
     const config = [["filtroObjetivo","objetivo"], ["filtroPrograma","programa"], ["filtroProyecto","proyecto"], ["filtroActividad","nombre"], ["filtroAnio","anio"], ["filtroRegion","region"], ["filtroInstitucion","institucion"], ["filtroAlcance","alcance"]];
     config.forEach(([id, campo]) => {
         const el = document.getElementById(id);
-        if (!el.value) {
+        const actualVal = el.value;
+        if (!actualVal) {
             const opts = [...new Set(filtrados.map(e => e[campo]))].filter(Boolean).sort();
             el.innerHTML = '<option value="">Todos</option>' + opts.map(o => `<option value="${o}">${o}</option>`).join('');
         }
@@ -211,14 +241,29 @@ function actualizarFiltrosCascada() {
 
 function exportarCSV() {
     const datos = obtenerDatosFiltrados();
-    if (!datos.length) return;
-    const headers = Object.keys(datos[0]).join(",");
-    const rows = datos.map(d => Object.values(d).map(v => `"${v}"`).join(","));
-    const blob = new Blob([headers + "\n" + rows.join("\n")], { type: 'text/csv;charset=utf-8;' });
+    if (!datos.length) {
+        alert("No hay datos para exportar.");
+        return;
+    }
+
+    const headers = ["Nombre", "Programa", "Proyecto", "Objetivo", "Tipo", "Modalidad", "Mes", "Año", "Localidad", "Region", "Institucion", "Alcance", "Investigadores", "Docentes", "Estudiantes", "Presenciales", "Virtuales"];
+    
+    const rows = datos.map(d => [
+        `"${d.nombre}"`, `"${d.programa}"`, `"${d.proyecto}"`, `"${d.objetivo}"`,
+        `"${d.tipo}"`, `"${d.modalidad}"`, `"${d.mes}"`, `"${d.anio}"`,
+        `"${d.localidad}"`, `"${d.region}"`, `"${d.institucion}"`, `"${d.alcance}"`,
+        d.investigadores, d.docentes, d.estudiantes, d.presenciales, d.virtuales
+    ].join(","));
+
+    const csvContent = "\uFEFF" + headers.join(",") + "\n" + rows.join("\n");
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = "popularizacion_ciencia.csv";
+    link.setAttribute("href", url);
+    link.setAttribute("download", "popularizacion_ciencia_concytec.csv");
+    document.body.appendChild(link);
     link.click();
+    document.body.removeChild(link);
 }
 
 cargarDatos();
