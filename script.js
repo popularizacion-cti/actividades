@@ -2,9 +2,13 @@ const SHEET_ID = "1e9ogOXCAVOoZAM8T9lITUD0K0o1KpnwK-6ZarZmVjSM";
 const URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json`;
 
 let eventosGlobal = [];
-let map, geoLayer;
+let map, geoLayer; tileLayer;
 let graficoRegion, graficoAnio;
 let metricaActual = 'actividades';
+
+// URLs de capas para modo claro y oscuro
+const TILE_LIGHT = 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
+const TILE_DARK = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
 
 async function cargarDatos() {
     try {
@@ -79,8 +83,10 @@ function inicializarMapa() {
         minZoom: 5.5, maxZoom: 5.5, tap: true, interactive: true
     }).setView([-9.19, -75.015], 5.5);
 
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png').addTo(map);
-
+    // Seleccionar capa inicial según tema actual
+        const currentTheme = document.documentElement.getAttribute('data-theme');
+        tileLayer = L.tileLayer(currentTheme === 'dark' ? TILE_DARK : TILE_LIGHT).addTo(map);
+    
     fetch('peru-regiones.geojson')
         .then(res => res.json())
         .then(data => {
@@ -96,6 +102,8 @@ function inicializarMapa() {
                         const nDoc = dataReg.reduce((a,b)=>a+(b.docentes||0), 0);
                         const nInv = dataReg.reduce((a,b)=>a+(b.investigadores||0), 0);
                         const nAsist = dataReg.reduce((a,b)=>a+(b.asistentes||0), 0);
+                        const nPres = dataReg.reduce((a,b)=>a+(b.presenciales||0), 0);
+                        const nVirt = dataReg.reduce((a,b)=>a+(b.virtuales||0), 0);
 
                         l.bindPopup(`
                             <div class="custom-popup">
@@ -106,6 +114,8 @@ function inicializarMapa() {
                                 <small>• Docentes: ${nDoc.toLocaleString()}</small><br>
                                 <small>• Investigadores: ${nInv.toLocaleString()}</small><br>
                                 <b>Asistentes:</b> ${nAsist.toLocaleString()}
+                                <small>• Presenciales: ${nPres.toLocaleString()}</small><br>
+                                <small>• Virtuales: ${nVirt.toLocaleString()}</small><br>
                             </div>
                         `).openPopup();
                     });
@@ -147,7 +157,7 @@ function actualizarVisualizacion() {
     const top3 = tiposSorted.slice(0, 3);
     const otrosSum = tiposSorted.slice(3).reduce((s, c) => s + c[1], 0);
     let htmlAct = `<span>Actividades</span><strong>${filtrados.length}</strong>`;
-    let detailAct = top3.map(t => `${t[1]} ${t[0].substring(0,10)}...`);
+    let detailAct = top3.map(t => `${t[1]} ${t[0].substring(0,15)}...`);
     if(otrosSum > 0) detailAct.push(`${otrosSum} Otros`);
     htmlAct += `<small>${detailAct.join(' | ')}</small>`;
     document.getElementById("kpiTotal").innerHTML = htmlAct;
@@ -158,18 +168,18 @@ function actualizarVisualizacion() {
     const invTotal = filtrados.reduce((a,b)=>a+b.investigadores, 0);
     let htmlPart = `<span>Participantes</span><strong>${(estTotal+docTotal+invTotal).toLocaleString()}</strong>`;
     let detailPart = [];
-    if(estTotal > 0) detailPart.push(`${estTotal.toLocaleString()} Alum.`);
-    if(docTotal > 0) detailPart.push(`${docTotal.toLocaleString()} Doc.`);
-    if(invTotal > 0) detailPart.push(`${invTotal.toLocaleString()} Inv.`);
+    if(estTotal > 0) detailPart.push(`${estTotal.toLocaleString()} Estudiantes`);
+    if(docTotal > 0) detailPart.push(`${docTotal.toLocaleString()} Docentes`);
+    if(invTotal > 0) detailPart.push(`${invTotal.toLocaleString()} Investigadores`);
     document.getElementById("kpiParticipantes").innerHTML = htmlPart + `<small>${detailPart.join(' | ')}</small>`;
 
     // KPI Asistentes
     const pres = filtrados.reduce((a,b)=>a+b.presenciales, 0);
     const virt = filtrados.reduce((a,b)=>a+b.virtuales, 0);
-    let htmlAsist = `<span>Asistentes</span><strong>${(pres+virt).toLocaleString()}</strong>`;
+    let htmlAsist = `<span>Público asistente</span><strong>${(pres+virt).toLocaleString()}</strong>`;
     let detailAsist = [];
-    if(pres > 0) detailAsist.push(`${pres.toLocaleString()} Pres.`);
-    if(virt > 0) detailAsist.push(`${virt.toLocaleString()} Virt.`);
+    if(pres > 0) detailAsist.push(`${pres.toLocaleString()} Presenciales`);
+    if(virt > 0) detailAsist.push(`${virt.toLocaleString()} Virtuales`);
     document.getElementById("kpiAsistentes").innerHTML = htmlAsist + `<small>${detailAsist.join(' | ')}</small>`;
 
     // Lista de actividades enriquecida
@@ -186,8 +196,8 @@ function actualizarVisualizacion() {
                 <h4>${e.nombre} (${e.mes} ${e.anio})</h4>
                 <p><strong>Organizado por:</strong> ${e.institucion}</p>
                 <p class="detalles-lista">
-                    ${p.length>0 ? 'Con la participación de '+p.join(', ')+'.' : ''}
-                    ${a.length>0 ? ' Asistencia: '+a.join(' y ')+'.' : ''}
+                    ${p.length>0 ? 'Con la participación de '+p.join(', ')+'.' : ' '}
+                    ${a.length>0 ? 'Asistencia: '+a.join(' y ')+'.' : ''}
                 </p>
             </div>`;
     }).join('');
@@ -219,16 +229,18 @@ function actualizarGraficas(datos) {
     });
 }
 
-function aplicarTema(tema) {
-    if (tema === 'system') {
-        const dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
-    } else {
-        document.documentElement.setAttribute('data-theme', tema);
-    }
-}
-
 function configurarEventos() {
+    const btnTheme = document.getElementById("themeToggle");
+    btnTheme.addEventListener("click", () => {
+        const current = document.documentElement.getAttribute('data-theme');
+        const next = current === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', next);
+        localStorage.setItem('theme', next);
+        // Cambiar capa del mapa sin recargar todo
+        map.removeLayer(tileLayer);
+        tileLayer = L.tileLayer(next === 'dark' ? TILE_DARK : TILE_LIGHT).addTo(map);
+    });
+    
     document.querySelectorAll(".filter-panel select").forEach(s => s.addEventListener("change", () => { 
         actualizarFiltrosCascada(); actualizarVisualizacion(); 
     }));
@@ -261,5 +273,9 @@ function actualizarFiltrosCascada() {
         }
     });
 }
+
+// Carga de tema inicial
+const savedTheme = localStorage.getItem('theme') || 'light';
+document.documentElement.setAttribute('data-theme', savedTheme);
 
 cargarDatos();
