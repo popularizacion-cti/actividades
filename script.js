@@ -37,8 +37,9 @@ async function cargarDatos() {
             asistentes: (Number(r.c[18]?.v) || 0) + (Number(r.c[19]?.v) || 0)
         }));
 
-        inicializarMapa();
         configurarEventos();
+        actualizarFiltrosCascada();
+        inicializarMapa();
         actualizarVisualizacion();
     } catch (e) {
         console.error("Error cargando datos:", e);
