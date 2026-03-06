@@ -84,6 +84,31 @@ header p { margin: 4px 0; font-size: 0.8rem; opacity: 0.9; }
     .main-layout { flex-direction: column; height: auto; }
     .visual-content { flex-direction: column; }
     .map-container { height: 500px; }
+    #map { height: 100% !important; min-height: 400px; }
     .charts-sidebar { height: 600px; }
     .indicadores { grid-template-columns: repeat(2, 1fr); }
+    .event-list {
+    background: var(--card-bg);
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    /* Estas 3 líneas son la clave */
+    height: 600px; /* Define un alto fijo o usa max-height */
+    display: flex;     flex-direction: column; 
+    }
+    #listaEventos {
+    /* Permite que solo la zona de los items tenga scroll */
+    overflow-y: auto;
+    flex-grow: 1;
+    margin-top: 1rem;
+    padding-right: 5px; /* Espacio para que el scroll no tape el texto */
+    }
+    /* Opcional: Dale estilo a la barra de scroll para que se vea mejor */
+    #listaEventos::-webkit-scrollbar {
+        width: 6px;
+    }
+    #listaEventos::-webkit-scrollbar-thumb {
+        background: var(--primary);
+        border-radius: 10px;
+    }
 }
