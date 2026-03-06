@@ -77,6 +77,10 @@ header p { margin: 4px 0; font-size: 0.8rem; opacity: 0.9; }
 */
 
 .map-controls select {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 1000;
     background-color: var(--card-bg);
     color: var(--text);
     border: 1px solid var(--border);
