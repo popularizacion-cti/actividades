@@ -13,15 +13,16 @@
 
     <header>
         <div class="header-content">
-            <h1>Observatorio Nacional Actividades de Popularización de la Ciencia</h1>
-            <p>Consejo Nacional de Ciencia, Tecnología e Innovación - CONCYTEC</p>
-            <div class="theme-switch-wrapper">
-                <label for="themeSelector">Tema: </label>
-                <select id="themeSelector">
-                    <option value="light">Modo Claro</option>
-                    <option value="dark">Modo Oscuro</option>
-                    <option value="system">Sistema</option>
-                </select>
+            <div class="header-titles">
+                <h1>Observatorio Nacional de Actividades de Popularización de la Ciencia</h1>
+                <p>Consejo Nacional de Ciencia, Tecnología e Innovación - CONCYTEC</p>
+            </div>
+            <div class="theme-toggle-container">
+                <button id="themeToggle" class="theme-switch" title="Cambiar Tema">
+                    <span class="icon-sun">☀️</span>
+                    <span class="icon-moon">🌙</span>
+                    <div class="switch-handle"></div>
+                </button>
             </div>
         </div>
     </header>
@@ -58,7 +59,7 @@
     <div class="main-layout">
         <aside class="side-panel">
             <div class="panel-header">
-                <span>Lista de actividades</span>
+                <span>LISTA DE ACTIVIDADES</span>
             </div>
             <div id="listaEventos"></div>
         </aside>
@@ -85,7 +86,7 @@
                     <div class="canvas-container"><canvas id="graficoRegiones"></canvas></div>
                 </div>
                 <div class="chart-box">
-                    <div class="chart-header" id="tituloGraficoAnio">Evolución</div>
+                    <div class="chart-header" id="tituloGraficoAnio">Por año</div>
                     <div class="canvas-container"><canvas id="graficoAnio"></canvas></div>
                 </div>
             </div>
