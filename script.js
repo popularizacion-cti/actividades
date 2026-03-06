@@ -113,7 +113,7 @@ function inicializarMapa() {
                                 <small>• Estudiantes: ${nEst.toLocaleString()}</small><br>
                                 <small>• Docentes: ${nDoc.toLocaleString()}</small><br>
                                 <small>• Investigadores: ${nInv.toLocaleString()}</small><br>
-                                <b>Asistentes:</b> ${nAsist.toLocaleString()}
+                                <b>Asistentes:</b> ${nAsist.toLocaleString()}<br>
                                 <small>• Presenciales: ${nPres.toLocaleString()}</small><br>
                                 <small>• Virtuales: ${nVirt.toLocaleString()}</small><br>
                             </div>
