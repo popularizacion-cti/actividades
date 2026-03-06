@@ -41,6 +41,7 @@ async function cargarDatos() {
         actualizarFiltrosCascada();
         inicializarMapa();
         actualizarVisualizacion();
+        
     } catch (e) {
         console.error("Error cargando datos:", e);
     }
@@ -254,9 +255,7 @@ function configurarEventos() {
         document.getElementById("buscadorTexto").value = "";
         actualizarFiltrosCascada(); actualizarVisualizacion();
     });
-    document.getElementById("themeSelector").addEventListener("change", (e) => {
-        aplicarTema(e.target.value); localStorage.setItem('theme', e.target.value);
-    });
+    
     actualizarFiltrosCascada();
 }
 
