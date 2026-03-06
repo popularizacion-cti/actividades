@@ -2,7 +2,7 @@ const SHEET_ID = "1e9ogOXCAVOoZAM8T9lITUD0K0o1KpnwK-6ZarZmVjSM";
 const URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json`;
 
 let eventosGlobal = [];
-let map, geoLayer; tileLayer;
+let map, geoLayer, tileLayer;
 let graficoRegion, graficoAnio;
 let metricaActual = 'actividades';
 
@@ -256,9 +256,6 @@ function configurarEventos() {
     document.getElementById("themeSelector").addEventListener("change", (e) => {
         aplicarTema(e.target.value); localStorage.setItem('theme', e.target.value);
     });
-    const savedTheme = localStorage.getItem('theme') || 'system';
-    document.getElementById("themeSelector").value = savedTheme;
-    aplicarTema(savedTheme);
     actualizarFiltrosCascada();
 }
 
