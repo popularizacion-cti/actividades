@@ -80,7 +80,7 @@ function obtenerDatosFiltrados() {
 function inicializarMapa() {
     if (map) map.remove();
     map = L.map('map', {
-        zoomControl: false, dragging: false, scrollWheelZoom: false, doubleClickZoom: false,
+        zoomControl: false, dragging: true, scrollWheelZoom: false, doubleClickZoom: false,
         touchZoom: false, boxZoom: false, keyboard: false, zoomSnap: 0.1,
         minZoom: 5.5, maxZoom: 5.5, tap: true, interactive: true
     }).setView([-9.19, -75.015], 5.5);
