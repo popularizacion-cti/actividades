@@ -5,6 +5,7 @@
     --text: #1E293B;
     --slate: #64748B;
     --border: #E2E8F0;
+    --header-text: #FFFFFF;
 }
 
 :root[data-theme="dark"] {
@@ -14,162 +15,109 @@
     --text: #F8FAFC;
     --slate: #94A3B8;
     --border: #334155;
+    --header-text: #FFFFFF;
 }
 
-body { margin: 0; font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); overflow-x: hidden; transition: 0.3s; }
+body { 
+    margin: 0; 
+    font-family: 'Inter', sans-serif; 
+    background: var(--bg); 
+    color: var(--text); 
+    overflow-x: hidden; 
+    transition: 0.3s; 
+}
 
 header { background: var(--primary); color: var(--header-text); padding: 1rem 2rem; position: relative; }
-.header-content { display: flex; justify-content: space-between; align-items: center; }
-header h1 { margin: 0; font-size: 1.2rem; }
-header p { margin: 4px 0; font-size: 0.8rem; opacity: 0.9; }
+.header-content { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+header h1 { margin: 0; font-size: 1.1rem; }
+header p { margin: 4px 0; font-size: 0.75rem; opacity: 0.9; }
 
 /* SWITCH DE TEMA */
 .theme-switch {
-    position: relative; width: 60px; height: 30px; background: rgba(0,0,0,0.2); border-radius: 20px; border: 2px solid white; cursor: pointer; display: flex; align-items: center; justify-content: space-around; padding: 0 5px;
+    position: relative; width: 50px; height: 26px; background: rgba(0,0,0,0.2); border-radius: 20px; border: 2px solid white; cursor: pointer; display: flex; align-items: center; justify-content: space-around; padding: 0 5px;
 }
 .switch-handle {
-    position: absolute; left: 4px; width: 22px; height: 22px; background: white; border-radius: 50%; transition: 0.3s;
+    position: absolute; left: 2px; width: 18px; height: 18px; background: white; border-radius: 50%; transition: 0.3s;
 }
-[data-theme="dark"] .switch-handle { transform: translateX(30px); }
-.theme-switch span { font-size: 14px; }
+[data-theme="dark"] .switch-handle { transform: translateX(24px); }
+.theme-switch span { font-size: 12px; }
 
 /* FILTROS */
-.filter-panel { background: var(--card-bg); padding: 1rem; border-bottom: 1px solid var(--border); }
-.filter-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; }
+.filter-panel { background: var(--card-bg); padding: 1rem 2rem; border-bottom: 1px solid var(--border); }
+.filter-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
 .search-box input { border: 2px solid var(--primary) !important; font-weight: 600; }
 .filter-group label { display: block; font-size: 0.65rem; font-weight: 800; color: var(--slate); text-transform: uppercase; margin-bottom: 4px; }
 .filter-group select, .filter-group input { width: 100%; padding: 6px; border-radius: 4px; border: 1px solid var(--border); font-size: 0.75rem; background: var(--card-bg); color: var(--text); outline: none; box-sizing: border-box;}
-
-.btn-clear { background: var(--slate); color: white; border: none; padding: 6px; border-radius: 4px; cursor: pointer; font-size: 0.7rem; width: 100%; }
+.btn-clear { background: var(--slate); color: white; border: none; padding: 6px; border-radius: 4px; cursor: pointer; font-size: 0.7rem; width: 100%; margin-top: 2px; }
 
 /* INDICADORES */
-/* Modifica la sección de indicadores */
 .indicadores { 
     display: grid; 
-    /* Cambiamos a auto-fit para que bajen solos si no hay espacio */
     grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); 
-    gap: 10px; 
-    padding: 10px 2rem; 
+    gap: 12px; 
+    padding: 15px 2rem; 
 }
-.kpi-card { flex: 2; background: var(--card-bg); padding: 8px 12px; border-radius: 8px; border-left: 4px solid var(--primary); box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-top: 1px solid var(--border); border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); display: flex; flex-direction: column; justify-content: center;}
-.kpi-small { flex: 1; } /* Periodo y Cobertura a la mitad */
+.kpi-card { background: var(--card-bg); padding: 10px 15px; border-radius: 8px; border-left: 4px solid var(--primary); box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-top: 1px solid var(--border); border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); }
 .kpi-card span { font-size: 0.65rem; color: var(--slate); font-weight: 700; text-transform: uppercase; }
-.kpi-card strong { display: block; font-size: 0.95rem; color: var(--text); }
-.kpi-card small { font-size: 0.6rem; color: var(--slate); display: block; margin-top: 2px; border-top: 1px solid var(--border); padding-top: 2px; }
+.kpi-card strong { display: block; font-size: 1.1rem; color: var(--text); margin: 4px 0; }
+.kpi-card small { font-size: 0.6rem; color: var(--slate); display: block; border-top: 1px solid var(--border); padding-top: 4px; }
 
-/* LAYOUT */
-/* Cambia la regla .main-layout por esta */
+/* LAYOUT PRINCIPAL */
 .main-layout { 
     display: flex; 
-    gap: 15px; 
-    padding: 1rem 2rem; 
-    /* Eliminamos el height fijo para que el iframe de Google Sites respire mejor */
-    min-height: 800px; 
+    gap: 20px; 
+    padding: 0 2rem 2rem 2rem; 
+    min-height: 700px; 
 }
-.side-panel { flex: 1; background: var(--card-bg); border-radius: 10px; display: flex; flex-direction: column; overflow: hidden; border: 1px solid var(--border); }
-.panel-header { padding: 10px; font-weight: 700; background: var(--bg); border-bottom: 1px solid var(--border); font-size: 0.8rem; }
-#listaEventos { flex: 1; overflow-y: auto; padding: 8px; }
-.evento-item { padding: 8px; border-bottom: 1px solid var(--border); font-size: 0.75rem;}
-.evento-item h4 { margin: 0 0 5px 0; color: var(--primary); font-size: 0.8rem; }
-.evento-item p { margin: 0; font-size: 0.75rem; color: var(--text); }
-.detalles-lista { font-size: 0.7rem !important; color: var(--slate) !important; margin-top: 4px !important; line-height: 1.3; }
 
-.visual-content { flex: 2; display: flex; gap: 15px; }
-
-/* Aseguramos que el mapa no desaparezca en contenedores pequeños */
-.map-container { 
-    flex: 1.5; /* Le damos un poco más de peso al mapa */
-    min-height: 500px; 
+/* PANEL LATERAL (LISTA) */
+.side-panel { 
+    flex: 0 0 280px; 
     background: var(--card-bg); 
     border-radius: 10px; 
-    position: relative; 
+    display: flex; 
+    flex-direction: column; 
     border: 1px solid var(--border); 
-    overflow: hidden; 
+    height: 700px;
 }
-#map { width: 100%; height: 100%; }
+.panel-header { padding: 12px; font-weight: 700; background: var(--bg); border-bottom: 1px solid var(--border); font-size: 0.8rem; }
+#listaEventos { flex: 1; overflow-y: auto; padding: 8px; }
+.evento-item { padding: 10px; border-bottom: 1px solid var(--border); }
+.evento-item h4 { margin: 0 0 5px 0; color: var(--primary); font-size: 0.8rem; line-height: 1.2; }
+.evento-item p { margin: 2px 0; font-size: 0.7rem; color: var(--text); }
+
+/* CONTENIDO VISUAL (MAPA Y GRÁFICOS) */
+.visual-content { flex: 1; display: flex; gap: 20px; }
+.map-container { flex: 1.5; background: var(--card-bg); border-radius: 10px; position: relative; border: 1px solid var(--border); overflow: hidden; min-height: 500px; }
+#map { width: 100%; height: 100%; z-index: 1; }
 
 .map-controls {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    z-index: 1000;
-    background-color: var(--card-bg);
-    color: var(--text);
-    padding: 6px 12px;
-    border-radius: 6px;
-    border: 1px solid var(--border);
-    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-    
-    /* Alineación en una sola línea */
-    display: flex;
-    align-items: center;
-    gap: 8px; /* Espacio entre el texto 'Métrica' y el selector */
-    font-size: 0.85rem;
-    font-weight: 500;
+    position: absolute; top: 10px; right: 10px; z-index: 1000;
+    background: var(--card-bg); padding: 6px 12px; border-radius: 6px;
+    border: 1px solid var(--border); box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    display: flex; align-items: center; gap: 8px; font-size: 0.75rem;
 }
+.map-controls select { padding: 3px; font-size: 0.75rem; border: 1px solid var(--border); background: var(--card-bg); color: var(--text); border-radius: 4px; }
 
-/* Estilo específico para el select dentro de los controles del mapa */
-.map-controls select {
-    background-color: var(--card-bg);
-    color: var(--text);
-    border: 1px solid var(--border);
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-family: 'Inter', sans-serif;
-    font-size: 0.85rem;
-    outline: none;
-    cursor: pointer;
-}
+/* BARRA DE GRÁFICOS */
+.charts-sidebar { flex: 0 0 320px; display: flex; flex-direction: column; gap: 15px; }
+.chart-box { flex: 1; background: var(--card-bg); padding: 12px; border-radius: 10px; border: 1px solid var(--border); display: flex; flex-direction: column; min-height: 300px; }
+.chart-header { font-weight: 700; font-size: 0.75rem; color: var(--primary); margin-bottom: 10px; text-transform: uppercase; border-bottom: 1px solid var(--border); padding-bottom: 5px; }
+.canvas-container { flex: 1; position: relative; width: 100%; }
 
-/* Estilo para las opciones dentro del desplegable (en algunos navegadores) */
-.map-controls select option {
-    background-color: var(--card-bg);
-    color: var(--text);
-}
-
-.charts-sidebar { flex: 1; display: flex; flex-direction: column; gap: 15px; min-width: 280px; }
-.chart-box { flex: 1; background: var(--card-bg); padding: 12px; border-radius: 10px; border: 1px solid var(--border); display: flex; flex-direction: column; }
-.chart-header { font-weight: 700; font-size: 0.75rem; color: var(--primary); margin-bottom: 8px; }
-.canvas-container { flex: 1; position: relative; min-height: 0; }
-
-/* RESPONSIVIDAD CORREGIDA */
-@media (max-width: 1200px) {
-    .main-layout { 
-        flex-direction: column; 
-        height: auto; 
-    }
-    
-    .visual-content { 
-        flex-direction: column; 
-    }
-
-    .side-panel { 
-        order: 3; /* Mandamos la lista al final en móviles/sites estrechos */
-        height: 400px; 
-    }
-
-    .map-container { 
-        height: 500px; 
-        order: 1;
-    }
-
-    .charts-sidebar { 
-        order: 2;
-        flex-direction: row; /* Gráficos uno al lado del otro si hay espacio */
-        gap: 10px;
-    }
-    
-    .chart-box {
-        flex: 1;
-        height: 300px;
-    }
+/* RESPONSIVIDAD PARA GOOGLE SITES E IFRAMES */
+@media (max-width: 1250px) {
+    .main-layout { flex-direction: column; height: auto; }
+    .side-panel { flex: none; width: 100%; height: 350px; order: 3; }
+    .visual-content { flex-direction: column; flex: none; width: 100%; }
+    .map-container { height: 500px; flex: none; order: 1; }
+    .charts-sidebar { flex: none; width: 100%; flex-direction: row; order: 2; height: 350px; }
+    .chart-box { flex: 1; min-height: unset; }
 }
 
 @media (max-width: 768px) {
-    .charts-sidebar { 
-        flex-direction: column; /* Gráficos uno sobre otro en móviles reales */
-    }
-    .indicadores {
-        grid-template-columns: repeat(2, 1fr);
-    }
+    .indicadores { grid-template-columns: repeat(2, 1fr); }
+    .charts-sidebar { flex-direction: column; height: auto; }
+    .chart-box { height: 300px; }
+    header .header-titles p { display: none; }
 }
