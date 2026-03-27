@@ -6,7 +6,6 @@ let map, geoLayer, tileLayer;
 let graficoRegion, graficoAnio;
 let metricaActual = 'actividades';
 
-// URLs de capas para modo claro y oscuro
 const TILE_LIGHT = 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
 const TILE_DARK = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
 
@@ -79,15 +78,15 @@ function obtenerDatosFiltrados() {
 
 function inicializarMapa() {
     if (map) map.remove();
+    // Optimización para Google Sites: Permitimos navegación pero quitamos el scroll zoom molesto
     map = L.map('map', {
-        zoomControl: false, dragging: true, scrollWheelZoom: false, doubleClickZoom: false,
-        touchZoom: false, boxZoom: false, keyboard: false, zoomSnap: 0.1,
-        minZoom: 5.5, maxZoom: 5.5, tap: true, interactive: true
-    }).setView([-9.19, -75.015], 5.5);
+        zoomControl: true, dragging: true, scrollWheelZoom: false,
+        touchZoom: true, zoomSnap: 0.1,
+        minZoom: 4.5, maxZoom: 8
+    }).setView([-9.19, -75.015], 5.2);
 
-    // Seleccionar capa inicial según tema actual
-        const currentTheme = document.documentElement.getAttribute('data-theme');
-        tileLayer = L.tileLayer(currentTheme === 'dark' ? TILE_DARK : TILE_LIGHT).addTo(map);
+    const currentTheme = document.documentElement.getAttribute('data-theme');
+    tileLayer = L.tileLayer(currentTheme === 'dark' ? TILE_DARK : TILE_LIGHT).addTo(map);
     
     fetch('peru-regiones.geojson')
         .then(res => res.json())
@@ -100,24 +99,16 @@ function inicializarMapa() {
                         const reg = f.properties.NOMBDEP.toUpperCase();
                         const dataReg = obtenerDatosFiltrados().filter(ev => ev.region === reg);
                         const nAct = dataReg.length;
-                        const nEst = dataReg.reduce((a,b)=>a+(b.estudiantes||0), 0);
-                        const nDoc = dataReg.reduce((a,b)=>a+(b.docentes||0), 0);
-                        const nInv = dataReg.reduce((a,b)=>a+(b.investigadores||0), 0);
+                        const nPart = dataReg.reduce((a,b)=>a+calcularValorPorMetrica(b, 'participantes'), 0);
                         const nAsist = dataReg.reduce((a,b)=>a+(b.asistentes||0), 0);
-                        const nPres = dataReg.reduce((a,b)=>a+(b.presenciales||0), 0);
-                        const nVirt = dataReg.reduce((a,b)=>a+(b.virtuales||0), 0);
 
                         l.bindPopup(`
-                            <div class="custom-popup">
-                                <h3>${reg}</h3><hr>
+                            <div style="font-family: 'Inter', sans-serif;">
+                                <h4 style="margin:0; color:#00A3E0">${reg}</h4>
+                                <hr style="margin:5px 0; opacity:0.2">
                                 <b>Actividades:</b> ${nAct}<br>
-                                <b>Participantes:</b> ${(nEst+nDoc+nInv).toLocaleString()}<br>
-                                <small>• Estudiantes: ${nEst.toLocaleString()}</small><br>
-                                <small>• Docentes: ${nDoc.toLocaleString()}</small><br>
-                                <small>• Investigadores: ${nInv.toLocaleString()}</small><br>
-                                <b>Asistentes:</b> ${nAsist.toLocaleString()}<br>
-                                <small>• Presenciales: ${nPres.toLocaleString()}</small><br>
-                                <small>• Virtuales: ${nVirt.toLocaleString()}</small><br>
+                                <b>Participantes:</b> ${nPart.toLocaleString()}<br>
+                                <b>Asistentes:</b> ${nAsist.toLocaleString()}
                             </div>
                         `).openPopup();
                     });
@@ -137,7 +128,7 @@ function estiloMapaDinamico(feature) {
     const ratio = valorRegion / maxVal;
     return {
         fillColor: valorRegion > 0 ? '#00A3E0' : 'transparent',
-        fillOpacity: valorRegion > 0 ? (ratio * 0.75 + 0.15) : 0,
+        fillOpacity: valorRegion > 0 ? (ratio * 0.7 + 0.2) : 0,
         weight: 1, color: '#fff'
     };
 }
@@ -146,63 +137,25 @@ function actualizarVisualizacion() {
     const filtrados = obtenerDatosFiltrados();
     if (geoLayer) geoLayer.setStyle(estiloMapaDinamico);
 
-    // KPI Años
+    // KPIs
     const listaAnios = filtrados.map(e => parseInt(e.anio)).filter(n => !isNaN(n));
-    const minAnio = Math.min(...listaAnios);
-    const maxAnio = Math.max(...listaAnios);
-    document.getElementById("kpiAnios").innerHTML = `<span>Periodo</span><strong>${minAnio === Infinity ? '-' : minAnio + ' - ' + maxAnio}</strong>`;
+    document.getElementById("kpiAnios").innerHTML = `<span>Periodo</span><strong>${listaAnios.length ? Math.min(...listaAnios) + ' - ' + Math.max(...listaAnios) : '-'}</strong>`;
     document.getElementById("kpiCobertura").innerHTML = `<span>Cobertura</span><strong>${new Set(filtrados.map(e=>e.region)).size} Regiones</strong>`;
+    document.getElementById("kpiTotal").innerHTML = `<span>Actividades</span><strong>${filtrados.length}</strong><small>Total programadas</small>`;
+    
+    const partTotal = filtrados.reduce((a,b)=>a+calcularValorPorMetrica(b, 'participantes'), 0);
+    document.getElementById("kpiParticipantes").innerHTML = `<span>Participantes</span><strong>${partTotal.toLocaleString()}</strong><small>Estud. | Docent. | Inv.</small>`;
+    
+    const asistTotal = filtrados.reduce((a,b)=>a+b.asistentes, 0);
+    document.getElementById("kpiAsistentes").innerHTML = `<span>Asistentes</span><strong>${asistTotal.toLocaleString()}</strong><small>Presencial y Virtual</small>`;
 
-    // KPI Actividades con Top 3
-    const conteoTipos = filtrados.reduce((acc, e) => { acc[e.tipo] = (acc[e.tipo] || 0) + 1; return acc; }, {});
-    const tiposSorted = Object.entries(conteoTipos).sort((a,b) => b[1]-a[1]);
-    const top3 = tiposSorted.slice(0, 3);
-    const otrosSum = tiposSorted.slice(3).reduce((s, c) => s + c[1], 0);
-    let htmlAct = `<span>Actividades</span><strong>${filtrados.length}</strong>`;
-    let detailAct = top3.map(t => `${t[1]} ${t[0].substring(0,15)}...`);
-    if(otrosSum > 0) detailAct.push(`${otrosSum} Otros`);
-    htmlAct += `<small>${detailAct.join(' | ')}</small>`;
-    document.getElementById("kpiTotal").innerHTML = htmlAct;
-
-    // KPI Participantes
-    const estTotal = filtrados.reduce((a,b)=>a+b.estudiantes, 0);
-    const docTotal = filtrados.reduce((a,b)=>a+b.docentes, 0);
-    const invTotal = filtrados.reduce((a,b)=>a+b.investigadores, 0);
-    let htmlPart = `<span>Participantes</span><strong>${(estTotal+docTotal+invTotal).toLocaleString()}</strong>`;
-    let detailPart = [];
-    if(estTotal > 0) detailPart.push(`${estTotal.toLocaleString()} Estudiantes`);
-    if(docTotal > 0) detailPart.push(`${docTotal.toLocaleString()} Docentes`);
-    if(invTotal > 0) detailPart.push(`${invTotal.toLocaleString()} Investigadores`);
-    document.getElementById("kpiParticipantes").innerHTML = htmlPart + `<small>${detailPart.join(' | ')}</small>`;
-
-    // KPI Asistentes
-    const pres = filtrados.reduce((a,b)=>a+b.presenciales, 0);
-    const virt = filtrados.reduce((a,b)=>a+b.virtuales, 0);
-    let htmlAsist = `<span>Público asistente</span><strong>${(pres+virt).toLocaleString()}</strong>`;
-    let detailAsist = [];
-    if(pres > 0) detailAsist.push(`${pres.toLocaleString()} Presenciales`);
-    if(virt > 0) detailAsist.push(`${virt.toLocaleString()} Virtuales`);
-    document.getElementById("kpiAsistentes").innerHTML = htmlAsist + `<small>${detailAsist.join(' | ')}</small>`;
-
-    // Lista de actividades enriquecida
-    document.getElementById("listaEventos").innerHTML = filtrados.map(e => {
-        let p = [];
-        if(e.estudiantes>0) p.push(`${e.estudiantes} estudiantes`);
-        if(e.docentes>0) p.push(`${e.docentes} docentes`);
-        if(e.investigadores>0) p.push(`${e.investigadores} investigadores`);
-        let a = [];
-        if(e.presenciales>0) a.push(`${e.presenciales} presencial`);
-        if(e.virtuales>0) a.push(`${e.virtuales} virtual`);
-        return `
-            <div class="evento-item">
-                <h4>${e.nombre} (${e.mes} ${e.anio})</h4>
-                <p><strong>Organizado por:</strong> ${e.institucion}</p>
-                <p class="detalles-lista">
-                    ${p.length>0 ? 'Con la participación de '+p.join(', ')+'.' : ' '}
-                    ${a.length>0 ? 'Asistencia: '+a.join(' y ')+'.' : ''}
-                </p>
-            </div>`;
-    }).join('');
+    // Lista
+    document.getElementById("listaEventos").innerHTML = filtrados.map(e => `
+        <div class="evento-item">
+            <h4>${e.nombre}</h4>
+            <p><strong>${e.region}</strong> | ${e.mes} ${e.anio}</p>
+            <p>${e.institucion}</p>
+        </div>`).join('');
 
     actualizarGraficas(filtrados);
 }
@@ -210,53 +163,46 @@ function actualizarVisualizacion() {
 function actualizarGraficas(datos) {
     if(graficoRegion) graficoRegion.destroy();
     if(graficoAnio) graficoAnio.destroy();
-    const label = document.getElementById("selectorMetricaMapa").selectedOptions[0].text;
+
     const rReg = {}, rAnio = {};
     datos.forEach(e => {
         const v = calcularValorPorMetrica(e, metricaActual);
         rReg[e.region] = (rReg[e.region] || 0) + v;
         rAnio[e.anio] = (rAnio[e.anio] || 0) + v;
     });
+
     const regs = Object.keys(rReg).sort((a,b)=>rReg[b]-rReg[a]).slice(0, 10);
     graficoRegion = new Chart(document.getElementById("graficoRegiones"), {
         type: 'bar',
-        data: { labels: regs, datasets: [{ data: regs.map(r=>rReg[r]), backgroundColor: '#00A3E0' }] },
+        data: { labels: regs.map(r => r.substring(0,10)), datasets: [{ data: regs.map(r=>rReg[r]), backgroundColor: '#00A3E0' }] },
         options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: false } }
     });
+
     const anios = Object.keys(rAnio).sort();
     graficoAnio = new Chart(document.getElementById("graficoAnio"), {
         type: 'line',
-        data: { labels: anios, datasets: [{ data: anios.map(a=>rAnio[a]), borderColor: '#00A3E0', fill: true, tension: 0.4 }] },
+        data: { labels: anios, datasets: [{ data: anios.map(a=>rAnio[a]), borderColor: '#00A3E0', fill: true, tension: 0.3, backgroundColor: 'rgba(0,163,224,0.1)' }] },
         options: { responsive: true, maintainAspectRatio: false, plugins: { legend: false } }
     });
 }
 
 function configurarEventos() {
-    const btnTheme = document.getElementById("themeToggle");
-    btnTheme.addEventListener("click", () => {
-        const current = document.documentElement.getAttribute('data-theme');
-        const next = current === 'dark' ? 'light' : 'dark';
+    document.getElementById("themeToggle").onclick = () => {
+        const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
         document.documentElement.setAttribute('data-theme', next);
         localStorage.setItem('theme', next);
-        // Cambiar capa del mapa sin recargar todo
         map.removeLayer(tileLayer);
         tileLayer = L.tileLayer(next === 'dark' ? TILE_DARK : TILE_LIGHT).addTo(map);
-    });
+    };
     
-    document.querySelectorAll(".filter-panel select").forEach(s => s.addEventListener("change", () => { 
-        actualizarFiltrosCascada(); actualizarVisualizacion(); 
-    }));
-    document.getElementById("buscadorTexto").addEventListener("input", actualizarVisualizacion);
-    document.getElementById("selectorMetricaMapa").addEventListener("change", (e) => { 
-        metricaActual = e.target.value; actualizarVisualizacion(); 
-    });
-    document.getElementById("btnLimpiar").addEventListener("click", () => {
+    document.querySelectorAll(".filter-panel select").forEach(s => s.onchange = () => { actualizarFiltrosCascada(); actualizarVisualizacion(); });
+    document.getElementById("buscadorTexto").oninput = actualizarVisualizacion;
+    document.getElementById("selectorMetricaMapa").onchange = (e) => { metricaActual = e.target.value; actualizarVisualizacion(); };
+    document.getElementById("btnLimpiar").onclick = () => {
         document.querySelectorAll(".filter-panel select").forEach(s => s.value = "");
         document.getElementById("buscadorTexto").value = "";
         actualizarFiltrosCascada(); actualizarVisualizacion();
-    });
-    
-    actualizarFiltrosCascada();
+    };
 }
 
 function actualizarFiltrosCascada() {
@@ -271,8 +217,6 @@ function actualizarFiltrosCascada() {
     });
 }
 
-// Carga de tema inicial
 const savedTheme = localStorage.getItem('theme') || 'light';
 document.documentElement.setAttribute('data-theme', savedTheme);
-
 cargarDatos();
